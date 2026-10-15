@@ -1,0 +1,33 @@
+HEADER    TRANSFERASE/DNA                         01-JAN-24   9XYZ              
+SEQRES   1 A    8  MET ALA MSE GLY SEP LYS TRP HIS                              
+SEQRES   1 B    4   DA  DC  DG  DT                                              
+ATOM      1 N    MET A   1       0.000   0.000   0.000  1.00 20.00           N
+ATOM      2 CA   MET A   1       0.000   0.000   0.000  1.00 20.00           C
+ATOM      3 C    MET A   1       0.000   0.000   0.000  1.00 20.00           C
+ATOM      4 N    ALA A   2       0.000   0.000   0.000  1.00 20.00           N
+ATOM      5 CA   ALA A   2       0.000   0.000   0.000  1.00 20.00           C
+ATOM      6 C    ALA A   2       0.000   0.000   0.000  1.00 20.00           C
+HETATM    7 N    MSE A   3       0.000   0.000   0.000  1.00 20.00           N
+HETATM    8 CA   MSE A   3       0.000   0.000   0.000  1.00 20.00           C
+HETATM    9 C    MSE A   3       0.000   0.000   0.000  1.00 20.00           C
+ATOM     10 N    GLY A   4       0.000   0.000   0.000  1.00 20.00           N
+ATOM     11 CA   GLY A   4       0.000   0.000   0.000  1.00 20.00           C
+ATOM     12 C    GLY A   4       0.000   0.000   0.000  1.00 20.00           C
+ATOM     13 N    TRP A   7       0.000   0.000   0.000  1.00 20.00           N
+ATOM     14 CA   TRP A   7       0.000   0.000   0.000  1.00 20.00           C
+ATOM     15 C    TRP A   7       0.000   0.000   0.000  1.00 20.00           C
+ATOM     16 N    HIS A   8       0.000   0.000   0.000  1.00 20.00           N
+ATOM     17 CA   HIS A   8       0.000   0.000   0.000  1.00 20.00           C
+ATOM     18 C    HIS A   8       0.000   0.000   0.000  1.00 20.00           C
+TER
+ATOM     19 P     DA B   1       0.000   0.000   0.000  1.00 20.00           P
+ATOM     20 C1'   DA B   1       0.000   0.000   0.000  1.00 20.00           C
+ATOM     21 P     DC B   2       0.000   0.000   0.000  1.00 20.00           P
+ATOM     22 C1'   DC B   2       0.000   0.000   0.000  1.00 20.00           C
+ATOM     23 P     DG B   3       0.000   0.000   0.000  1.00 20.00           P
+ATOM     24 C1'   DG B   3       0.000   0.000   0.000  1.00 20.00           C
+ATOM     25 P     DT B   4       0.000   0.000   0.000  1.00 20.00           P
+ATOM     26 C1'   DT B   4       0.000   0.000   0.000  1.00 20.00           C
+HETATM   27 O    HOH A 101       0.000   0.000   0.000  1.00 20.00           O
+HETATM   28 C1   ATP A 201       0.000   0.000   0.000  1.00 20.00           C
+END

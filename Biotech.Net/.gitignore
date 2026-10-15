@@ -429,3 +429,10 @@ FodyWeavers.xsd
 
 # Rust
 native/*/target/
+
+# Protein Data Bank files are data here, not debug symbols.
+!src/**/Data/*.pdb
+!tests/**/[Dd]ata/*.pdb
+!samples/**/*.pdb
+!docs/**/*.pdb
+!notebooks/**/*.pdb
