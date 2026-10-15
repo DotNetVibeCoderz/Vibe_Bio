@@ -335,6 +335,22 @@ public class SequencePlotTests
     }
 
     [Fact]
+    public void EmbeddedLetterOutlinesCoverTheUnitSquare()
+    {
+        for (char c = 'A'; c <= 'Z'; c++)
+        {
+            var outline = LetterGlyphs.Outline(c);
+            Assert.NotEmpty(outline);
+            var pts = outline.SelectMany(s => s.Points).ToArray();
+            Assert.All(pts, p => Assert.InRange(p.X, -1e-9, 1 + 1e-9));
+            Assert.All(pts, p => Assert.InRange(p.Y, -1e-9, 1 + 1e-9));
+            Assert.Equal(1, pts.Max(p => p.X) - pts.Min(p => p.X), 2);
+            Assert.Equal(1, pts.Max(p => p.Y) - pts.Min(p => p.Y), 2);
+        }
+        Assert.Equal(LetterGlyphs.Outline('A').Length, LetterGlyphs.Outline('a').Length);
+    }
+
+    [Fact]
     public void ProteinLogoFromSequences()
     {
         var seqs = new[] { "MKVLA", "MKILA", "MRVLG", "MKVLA" }.Select((s, i) => Sequence.Protein(s, $"p{i}"));

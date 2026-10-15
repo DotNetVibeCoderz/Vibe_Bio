@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using Matplotlib.Net.Rendering;
 using SkiaSharp;
 using Visual.Net.Core.Colors;
@@ -159,9 +160,13 @@ internal static class LetterGlyphs
         r.FillPath(path, new Brush(color));
     }
 
-    /// <summary>The unit-square outline of a letter (empty when no font is available).</summary>
+    /// <summary>
+    /// The unit-square outline of a letter: the embedded DejaVu Sans Bold outline for A–Z (so logos look the same
+    /// on every machine, fonts installed or not), otherwise the system font (empty when no font is available).
+    /// </summary>
     internal static (PathVerb Verb, Pt[] Points)[] Outline(char letter)
     {
+        if (LetterOutlines.Paths.TryGetValue(char.ToUpperInvariant(letter), out var embedded)) return Parse(embedded);
         try
         {
             using var typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold) ?? SKTypeface.Default;
@@ -193,5 +198,32 @@ internal static class LetterGlyphs
         {
             return [];
         }
+    }
+
+    private static (PathVerb Verb, Pt[] Points)[] Parse(string commands)
+    {
+        var tokens = commands.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var result = new List<(PathVerb, Pt[])>();
+        int i = 0;
+        Pt[] Read(int n)
+        {
+            var pts = new Pt[n];
+            for (int k = 0; k < n; k++, i += 2)
+                pts[k] = new Pt(double.Parse(tokens[i], CultureInfo.InvariantCulture), double.Parse(tokens[i + 1], CultureInfo.InvariantCulture));
+            return pts;
+        }
+        while (i < tokens.Length)
+        {
+            switch (tokens[i++])
+            {
+                case "M": result.Add((PathVerb.MoveTo, Read(1))); break;
+                case "L": result.Add((PathVerb.LineTo, Read(1))); break;
+                case "Q": result.Add((PathVerb.QuadTo, Read(2))); break;
+                case "C": result.Add((PathVerb.CubicTo, Read(3))); break;
+                case "Z": result.Add((PathVerb.Close, [])); break;
+                default: throw new FormatException($"Bad outline command '{tokens[i - 1]}'.");
+            }
+        }
+        return result.ToArray();
     }
 }
