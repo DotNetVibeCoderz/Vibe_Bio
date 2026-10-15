@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Proteomics</RootNamespace>
+    <Description>Protein analysis: physicochemical properties, digestion, mass spectrometry, secondary structure and classification. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Proteomics.Tests" />
+  </ItemGroup>
+
+</Project>

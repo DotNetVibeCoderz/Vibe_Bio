@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Sequences</RootNamespace>
+    <NoWarn>$(NoWarn);CS1573</NoWarn>
+    <Description>DNA, RNA and protein sequence operations and readers/writers for FASTA, FASTQ, GenBank, EMBL and PDB. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Sequences.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,101 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# 04 · RNA-seq differential expression
+
+**EN** — Simulate a small count matrix, run DESeq2-style differential expression, and explore the result with a table, volcano plot, MA plot, PCA and a clustered heatmap of the top genes.
+
+**ID** — Mensimulasikan matriks hitungan kecil, menjalankan analisis ekspresi diferensial ala DESeq2, lalu menelusuri hasilnya dengan tabel, volcano plot, MA plot, PCA, dan heatmap terklaster untuk gen teratas.
+
+*Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil*
+
+#!csharp
+
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+// Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
+// #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
+
+#!csharp
+
+using Biotech.Net.Core;
+using Biotech.Net.Transcriptomics;
+using Biotech.Net.Visualization;
+using Biotech.Net.Notebooks;
+
+BiotechFormatters.Register();
+
+#!markdown
+
+## Simulated counts · Hitungan simulasi
+
+1,000 genes × 8 samples (4 control, 4 treated); the first 60 genes respond to treatment.
+1.000 gen × 8 sampel (4 kontrol, 4 perlakuan); 60 gen pertama merespons perlakuan.
+
+#!csharp
+
+var rng = new Random(42);
+int genes = 1000, samples = 8;
+var values = new double[genes * samples];
+for (int g = 0; g < genes; g++)
+{
+    double mean = Math.Exp(2 + rng.NextDouble() * 6);
+    double fold = g < 30 ? 4 : g < 60 ? 0.25 : 1;
+    for (int s = 0; s < samples; s++)
+    {
+        double mu = mean * (s >= 4 ? fold : 1);
+        // Gamma-Poisson-ish noise · derau mirip Gamma-Poisson
+        double noisy = mu * Math.Exp(0.25 * (rng.NextDouble() + rng.NextDouble() + rng.NextDouble() - 1.5));
+        values[g * samples + s] = Math.Round(noisy);
+    }
+}
+var counts = new Dataset("counts",
+    Enumerable.Range(1, genes).Select(i => $"gene{i:D4}").ToArray(),
+    ["ctl1", "ctl2", "ctl3", "ctl4", "trt1", "trt2", "trt3", "trt4"], values);
+counts.Annotate("condition", "ctl", "ctl", "ctl", "ctl", "trt", "trt", "trt", "trt");
+counts
+
+#!markdown
+
+## DESeq2 Wald test · Uji Wald DESeq2
+
+#!csharp
+
+var result = DESeq.Run(counts, "condition", "ctl", "trt");
+result
+
+#!csharp
+
+new VolcanoPlot(result) { LabelTop = 8, FoldChangeThreshold = 1 }
+
+#!csharp
+
+new MaPlot(result)
+
+#!markdown
+
+## PCA of variance-stabilised counts · PCA dari hitungan yang distabilkan variansnya
+
+#!csharp
+
+var vst = Transforms.Vst(counts);
+var pca = Pca.Fit(DenseMatrix.FromDataset(vst, transpose: true), components: 4);
+EmbeddingPlot.FromPca(pca, counts.ColumnAnnotations["condition"], counts.ColumnNames)
+
+#!markdown
+
+## Heatmap of the top genes · Heatmap gen teratas
+
+#!csharp
+
+var top = result.Top(40).Select(r => vst.RowIndex(r.Gene)).ToArray();
+var heat = Heatmap.FromDataset(vst.SelectRows(top, "top 40 genes (VST, z-score)"));
+heat
+
+#!csharp
+
+// Interactive Plotly version, or a high-DPI PNG for a report · versi interaktif atau PNG untuk laporan
+heat.Save("top-genes.html");
+File.WriteAllBytes("top-genes.png", heat.ToPng(scale: 2));

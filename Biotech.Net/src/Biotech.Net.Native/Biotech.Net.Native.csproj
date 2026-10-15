@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Native</RootNamespace>
+    <Description>Rust-accelerated kernels (sequence, alignment, statistics, protein) with a managed fallback for every entry point. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+    <!-- The Rust crate this project wraps. `-p:SkipRustBuild=true` uses whatever binary is already built. -->
+    <BiotechNativeDir>$(MSBuildThisFileDirectory)../../native/biotech-native/</BiotechNativeDir>
+    <BiotechNativeOut>$(BiotechNativeDir)target/release/</BiotechNativeOut>
+    <SkipRustBuild Condition="'$(SkipRustBuild)' == ''">false</SkipRustBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Native.Tests" />
+    <InternalsVisibleTo Include="Biotech.Net.Benchmarks" />
+  </ItemGroup>
+
+  <!--
+    Build the Rust library when cargo is on PATH. A missing toolchain is not an error: the managed
+    fallback in ManagedKernels covers every native entry point.
+  -->
+  <Target Name="BuildBiotechNative" BeforeTargets="BeforeBuild" Condition="'$(SkipRustBuild)' != 'true' And Exists('$(BiotechNativeDir)Cargo.toml')">
+    <Exec Command="cargo --version" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="_CargoExitCode" />
+    </Exec>
+    <Exec Condition="'$(_CargoExitCode)' == '0'" Command="cargo build --release" WorkingDirectory="$(BiotechNativeDir)" />
+    <Message Condition="'$(_CargoExitCode)' != '0'" Importance="high" Text="Biotech.Net.Native: cargo not found - building without the Rust accelerator (managed fallback only)." />
+  </Target>
+
+  <!--
+    Ship whatever native binaries exist: next to the assembly for local runs and project references,
+    and under runtimes/{rid}/native in the NuGet package.
+  -->
+  <Target Name="IncludeBiotechNative" BeforeTargets="AssignTargetPaths;_GetPackageFiles">
+    <ItemGroup>
+      <_BiotechNative Include="$(BiotechNativeOut)biotech_native.dll" Rid="win-x64" Condition="Exists('$(BiotechNativeOut)biotech_native.dll')" />
+      <_BiotechNative Include="$(BiotechNativeOut)libbiotech_native.so" Rid="linux-x64" Condition="Exists('$(BiotechNativeOut)libbiotech_native.so')" />
+      <_BiotechNative Include="$(BiotechNativeOut)libbiotech_native.dylib" Rid="osx-arm64" Condition="Exists('$(BiotechNativeOut)libbiotech_native.dylib')" />
+      <None Include="@(_BiotechNative)" Link="%(_BiotechNative.Filename)%(_BiotechNative.Extension)" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="runtimes/%(_BiotechNative.Rid)/native/" />
+    </ItemGroup>
+  </Target>
+
+</Project>

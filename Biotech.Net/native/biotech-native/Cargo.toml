@@ -1,0 +1,22 @@
+[package]
+name = "biotech-native"
+version = "0.1.0"
+edition = "2021"
+description = "Rust-accelerated kernels for Biotech.Net (sequence, alignment, statistics, protein, structure) exposed through a C ABI. Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil."
+license = "MIT"
+repository = "https://github.com/DotNetVibeCoderz/Vibe_Bio"
+publish = false
+
+[lib]
+name = "biotech_native"
+crate-type = ["cdylib", "rlib"]
+
+# No dependencies on purpose: the crate must build offline on any machine with a Rust toolchain.
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+# Unwinding stays enabled so the FFI layer can catch any panic before it reaches .NET.
+panic = "unwind"

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Transcriptomics</RootNamespace>
+    <Description>RNA-Seq quantification, normalisation, differential expression and single-cell analysis. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Gravicode.Science.GraviNum" />
+    <PackageReference Include="Gravicode.Science.GraviLearn" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Transcriptomics.Tests" />
+  </ItemGroup>
+
+</Project>

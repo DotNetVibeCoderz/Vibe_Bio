@@ -1,0 +1,57 @@
+LOCUS       TEST0001                 700 bp    DNA     linear   BCT 15-MAR-2024
+DEFINITION  Escherichia coli synthetic test locus, abcA gene, complete cds; and
+            xyzB pseudogene.
+ACCESSION   TEST0001
+VERSION     TEST0001.2
+KEYWORDS    test; synthetic.
+SOURCE      Escherichia coli
+  ORGANISM  Escherichia coli
+            Bacteria; Pseudomonadota; Gammaproteobacteria; Enterobacterales;
+            Enterobacteriaceae; Escherichia.
+REFERENCE   1  (bases 1 to 700)
+  AUTHORS   Fadhil,K. and Studios,G.
+  TITLE     A synthetic GenBank record for parser tests
+  JOURNAL   Unpublished
+COMMENT     This record is synthetic.
+            Second comment line.
+FEATURES             Location/Qualifiers
+     source          1..700
+                     /organism="Escherichia coli"
+                     /mol_type="genomic DNA"
+                     /db_xref="taxon:562"
+     gene            10..309
+                     /gene="abcA"
+                     /locus_tag="ECO_0001"
+     CDS             10..309
+                     /gene="abcA"
+                     /locus_tag="ECO_0001"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="putative ABC transporter ATP-binding protein
+                     with an unusually long product name"
+                     /note="contains ""quoted"" text"
+                     /translation="MAKDNYITYTSARNLLAQCESLKGVSVMHTPLLAVSTPSDWHFY
+                     YTQKQNSGNFDRSRRGAPSSAWTLAMNLFTHSAKLQRGQFHHPKPNNAFALLTTT"
+     CDS             complement(join(350..400,449..520))
+                     /gene="xyzB"
+                     /pseudo
+     mRNA            join(<1..60,100..>150)
+                     /note="partial transcript"
+     misc_feature    order(5..8,530..540)
+     misc_binding    560^561
+     repeat_region   complement(600..650)
+                     /rpt_type=inverted
+ORIGIN      
+        1 gtaggggcaa tggctaaaga caattacata acatacacgt cagcacgaaa cttgttggcc
+       61 cagtgtgaat cgcttaaggg tgtaagtgtg atgcatacgc ctttacttgc tgtgtccacc
+      121 ccatcggact ggcattttta ttacactcag aaacagaact cgggtaattt tgacaggtca
+      181 cgcagaggcg cgccctccag tgcgtggaca ctcgctatga atctctttac ccactctgcc
+      241 aaactccagc gcggtcagtt ccatcaccct aagccgaata atgcgttcgc tctattgact
+      301 acgacgtaag cgcagtatgc caagactata ggcactgtcg catcacaaat caggatcgca
+      361 ttgacttgtc aggcggcaaa tagagtttct ccgacgccgg cgattaactg ataaatgagc
+      421 cctttatgac acgggcatat gactggtttc gtgtgcatct gtcttctagt ctcagacagc
+      481 gtccttgttc cataactctc cgacaaggga atgagcgcat tacgatagta tgtccaacgg
+      541 cgagctttac atttgctgtg agaggtacag ggattagtga gaagccgtgc gtatcaattc
+      601 gtaccttggg ggtcgttacc actctgttcc cacgagcggc atttctggat ggccagcttt
+      661 tgacatttaa tttcacccat aaaccagcgt aaagctgcaa
+//

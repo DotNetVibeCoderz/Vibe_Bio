@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Core</RootNamespace>
+    <Description>Core abstractions: Sequence, Alphabet, Genome, Chromosome, Gene, Protein, Variant, genomic intervals and labelled datasets. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Native/Biotech.Net.Native.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Core.Tests" />
+  </ItemGroup>
+
+</Project>

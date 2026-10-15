@@ -1,0 +1,104 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# 02 · Sequences and file I/O
+
+**EN** — Read FASTA and FASTQ, inspect composition, find ORFs and restriction sites, align two sequences, and draw a sequence logo and a dot plot.
+
+**ID** — Membaca FASTA dan FASTQ, memeriksa komposisi, mencari ORF dan situs restriksi, menyejajarkan dua sekuens, serta menggambar logo sekuens dan dot plot.
+
+*Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil*
+
+#!csharp
+
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+// Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
+// #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
+
+#!csharp
+
+using Biotech.Net.Core;
+using Biotech.Net.Sequences;
+using Biotech.Net.Sequences.IO;
+using Biotech.Net.Alignments;
+using Biotech.Net.Native;   // AlignmentMode
+using Biotech.Net.Visualization;
+using Biotech.Net.Notebooks;
+
+BiotechFormatters.Register();
+
+#!markdown
+
+## FASTA · FASTA
+
+#!csharp
+
+var fasta = """
+>pUC_fragment lacZ alpha region
+ATGACCATGATTACGCCAAGCTTGCATGCCTGCAGGTCGACTCTAGAGGATCCCCGGGTACCGAGCTCGAATTCACTGGCCGTCGTTTTACAACGTCGTGACTGGGAAAACCCTGGCG
+>variant_copy
+ATGACCATGATTACGCCAAGCTTGCATGCCTGCAGGTCGACTCTAGAGGATCCCCGGGTACCGAGCTCGAATTCACTGGCCGTCGTTTTACAACGTCGTGACTGGGAAAACCCTGGCG
+""";
+var records = FastaReader.Parse(fasta);
+records[0]
+
+#!csharp
+
+var orfs = OrfFinder.Find(records[0], new OrfOptions { MinLength = 30 });
+orfs
+
+#!csharp
+
+// Restriction digest with common cloning enzymes · Pemotongan dengan enzim restriksi
+RestrictionDigest.Digest(records[0], false, "EcoRI", "BamHI", "HindIII")
+
+#!markdown
+
+## FASTQ reads · Read FASTQ
+
+#!csharp
+
+var fastq = """
+@read1
+ACGTACGTTAGCTAGCTAGGATCGATCGATTACG
++
+IIIIIIIIIIIIIHHHHHGGGGFFFF####!!!!
+@read2
+TTGCAGGATCCATGACCATGATTACGCCAAGCTT
++
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+""";
+var reads = FastqReader.Parse(fastq);
+reads[0]
+
+#!markdown
+
+## Pairwise alignment · Penyejajaran berpasangan
+
+#!csharp
+
+var aligner = new PairwiseAligner { Mode = AlignmentMode.Global, MatchScore = 2, MismatchScore = -1, OpenGapScore = -4, ExtendGapScore = -1 };
+aligner.Align(Sequence.Dna("GATTACAGATTACAGGCT", "target"), Sequence.Dna("GATTCAGATTTACAGCT", "query"))
+
+#!markdown
+
+## Sequence logo and dot plot · Logo sekuens dan dot plot
+
+A logo of bacterial −10 promoter boxes (Pribnow box), in bits.
+Logo kotak promoter −10 bakteri (kotak Pribnow), dalam satuan bit.
+
+#!csharp
+
+new SequenceLogo(new[] { "TATAAT", "TATAAT", "TATGAT", "TACAAT", "TATAAT", "GATAAT", "TATACT", "TATAAT", "TAAAAT", "TATATT" })
+{
+    Title = "−10 box (Pribnow)"
+}
+
+#!csharp
+
+var seq = records[0];
+var inverted = seq.Subsequence(0, 60).Concat(seq.Subsequence(60, seq.Length - 60).ReverseComplement(), "inverted");
+new DotPlot(seq, inverted, window: 8)

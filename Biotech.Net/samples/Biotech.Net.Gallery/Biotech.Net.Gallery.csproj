@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Biotech.Net Gallery: Avalonia showcase of every module.
+    Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Biotech.Net.Gallery</RootNamespace>
+    <AssemblyName>Biotech.Net.Gallery</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+    <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\..\assets\app.ico" Link="Assets\app.ico" />
+    <AvaloniaResource Include="..\..\assets\icon-512.png" Link="Assets\icon-512.png" />
+    <EmbeddedResource Include="Data\*.*" LogicalName="Gallery.Data.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Genomics/Biotech.Net.Genomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Proteomics/Biotech.Net.Proteomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.StructuralBiology/Biotech.Net.StructuralBiology.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.DrugDiscovery/Biotech.Net.DrugDiscovery.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.SyntheticBiology/Biotech.Net.SyntheticBiology.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.AI/Biotech.Net.AI.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Visualization/Biotech.Net.Visualization.csproj" />
+  </ItemGroup>
+
+</Project>

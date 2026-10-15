@@ -1,0 +1,66 @@
+ID   TEST0001; SV 2; linear; DNA; ; PRO; 700 BP.
+XX
+AC   TEST0001;
+XX
+DE   Escherichia coli synthetic test locus, abcA gene, complete cds; and xyzB
+DE   pseudogene
+XX
+KW   test
+KW   synthetic
+XX
+OS   Escherichia coli
+OC   Bacteria; Pseudomonadota; Gammaproteobacteria; Enterobacterales;
+OC   Enterobacteriaceae; Escherichia.
+XX
+RN   [1]
+RP   1-700
+RA   Fadhil,K. and Studios,G.;
+RT   "A synthetic GenBank record for parser tests";
+RL   Unpublished
+XX
+CC   This record is synthetic.
+CC   Second comment line.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..700
+FT                   /organism="Escherichia coli"
+FT                   /mol_type="genomic DNA"
+FT                   /db_xref="taxon:562"
+FT   gene            10..309
+FT                   /gene="abcA"
+FT                   /locus_tag="ECO_0001"
+FT   CDS             10..309
+FT                   /gene="abcA"
+FT                   /locus_tag="ECO_0001"
+FT                   /codon_start=1
+FT                   /transl_table=11
+FT                   /product="putative ABC transporter ATP-binding protein with
+FT                   an unusually long product name"
+FT                   /note="contains ""quoted"" text"
+FT                   /translation="MAKDNYITYTSARNLLAQCESLKGVSVMHTPLLAVSTPSDWHFYY
+FT                   TQKQNSGNFDRSRRGAPSSAWTLAMNLFTHSAKLQRGQFHHPKPNNAFALLTTT"
+FT   CDS             complement(join(350..400,449..520))
+FT                   /gene="xyzB"
+FT                   /pseudo=""
+FT   mRNA            join(<1..60,100..>150)
+FT                   /note="partial transcript"
+FT   misc_feature    order(5..8,530..540)
+FT   misc_binding    560^561
+FT   repeat_region   complement(600..650)
+FT                   /rpt_type=inverted
+XX
+SQ   Sequence 700 BP; 177 A; 177 C; 165 G; 181 T; 0 other;
+     gtaggggcaa tggctaaaga caattacata acatacacgt cagcacgaaa cttgttggcc        60
+     cagtgtgaat cgcttaaggg tgtaagtgtg atgcatacgc ctttacttgc tgtgtccacc       120
+     ccatcggact ggcattttta ttacactcag aaacagaact cgggtaattt tgacaggtca       180
+     cgcagaggcg cgccctccag tgcgtggaca ctcgctatga atctctttac ccactctgcc       240
+     aaactccagc gcggtcagtt ccatcaccct aagccgaata atgcgttcgc tctattgact       300
+     acgacgtaag cgcagtatgc caagactata ggcactgtcg catcacaaat caggatcgca       360
+     ttgacttgtc aggcggcaaa tagagtttct ccgacgccgg cgattaactg ataaatgagc       420
+     cctttatgac acgggcatat gactggtttc gtgtgcatct gtcttctagt ctcagacagc       480
+     gtccttgttc cataactctc cgacaaggga atgagcgcat tacgatagta tgtccaacgg       540
+     cgagctttac atttgctgtg agaggtacag ggattagtga gaagccgtgc gtatcaattc       600
+     gtaccttggg ggtcgttacc actctgttcc cacgagcggc atttctggat ggccagcttt       660
+     tgacatttaa tttcacccat aaaccagcgt aaagctgcaa                             700
+//

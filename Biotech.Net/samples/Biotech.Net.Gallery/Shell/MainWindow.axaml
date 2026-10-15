@@ -1,0 +1,126 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="using:Biotech.Net.Gallery.Shell"
+        xmlns:ctl="using:Biotech.Net.Gallery.Controls"
+        xmlns:ae="using:AvaloniaEdit"
+        x:Class="Biotech.Net.Gallery.Shell.MainWindow"
+        x:DataType="shell:MainViewModel"
+        Title="Biotech.Net Gallery"
+        Icon="avares://Biotech.Net.Gallery/Assets/app.ico"
+        Width="1440" Height="900" MinWidth="1100" MinHeight="700"
+        WindowStartupLocation="CenterScreen">
+
+  <Grid ColumnDefinitions="236,*">
+
+    <!-- ============ Rail ============ -->
+    <Border Grid.Column="0" Background="{StaticResource BenchBrush}" BorderBrush="{StaticResource RuleBrush}" BorderThickness="0,0,1,0">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="20,22,20,18" Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Image Source="avares://Biotech.Net.Gallery/Assets/icon-512.png" Width="34" Height="34" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="BIOTECH.NET" FontFamily="{StaticResource DisplayFont}" FontWeight="Bold" FontSize="17" LetterSpacing="1.2" Foreground="{StaticResource InkBrush}" />
+              <TextBlock Text="GALLERY · BENCH" Classes="eyebrow" FontSize="10" />
+            </StackPanel>
+          </StackPanel>
+          <!-- four dye channels: the whole palette of the app -->
+          <Grid ColumnDefinitions="*,*,*,*" Height="3" Margin="0,6,0,0">
+            <Border Grid.Column="0" Background="{StaticResource DyeABrush}" />
+            <Border Grid.Column="1" Background="{StaticResource DyeCBrush}" />
+            <Border Grid.Column="2" Background="{StaticResource DyeGBrush}" />
+            <Border Grid.Column="3" Background="{StaticResource DyeTBrush}" />
+          </Grid>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="20,12,20,18" Spacing="6">
+          <Border Height="1" Background="{StaticResource RuleBrush}" Margin="0,0,0,8" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Ellipse Width="7" Height="7" Fill="{StaticResource DyeABrush}" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Kernels}" Classes="mono" FontSize="11" Foreground="{StaticResource Ink2Brush}" />
+            <TextBlock Text="{Binding Version}" Classes="mono" FontSize="11" Foreground="{StaticResource Ink3Brush}" />
+          </StackPanel>
+          <TextBlock Text="{Binding Credits}" Classes="caption" />
+        </StackPanel>
+
+        <StackPanel>
+          <TextBlock Text="MODULES" Classes="eyebrow" Margin="20,4,20,8" />
+          <ItemsControl ItemsSource="{Binding Pages}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="shell:GalleryPage">
+                <Button Classes="nav" Classes.active="{Binding IsActive}"
+                        Command="{Binding $parent[Window].((shell:MainViewModel)DataContext).NavigateCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid ColumnDefinitions="3,16,*" Height="40">
+                    <Border Grid.Column="0" Background="{StaticResource LampBrush}" IsVisible="{Binding IsActive}" />
+                    <ctl:ChannelMark Grid.Column="1" Channel="{Binding Channel}" Width="7" Height="7" Margin="17,0,0,0"
+                                     HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding Title}" Margin="22,0,12,0" VerticalAlignment="Center" FontSize="13" />
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- ============ Page ============ -->
+    <DockPanel Grid.Column="1">
+      <!-- header -->
+      <StackPanel DockPanel.Dock="Top" Margin="32,22,32,0">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="2">
+            <TextBlock Text="{Binding SelectedPage.Modules}" Classes="eyebrow" />
+            <TextBlock Text="{Binding SelectedPage.Title}" Classes="title" />
+            <TextBlock Text="{Binding SelectedPage.Lede}" Classes="lede" MaxWidth="760" HorizontalAlignment="Left" Margin="0,2,0,0" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Spacing="8" HorizontalAlignment="Right">
+            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+              <Button Classes="quiet" Content="Copy result" Command="{Binding CopyResultCommand}" IsVisible="{Binding !ShowCode}" />
+              <Button Classes="quiet" Content="Copy code" Command="{Binding CopyCodeCommand}" IsVisible="{Binding ShowCode}" />
+              <Button Classes="quiet" Content="Save PNG" Command="{Binding SavePngCommand}" />
+              <Button Classes="quiet" Content="Save SVG" Command="{Binding SaveSvgCommand}" IsEnabled="{Binding CanSaveSvg}" />
+            </StackPanel>
+            <TextBlock Text="{Binding Toast}" Classes="caption" HorizontalAlignment="Right" Foreground="{StaticResource DyeABrush}" />
+          </StackPanel>
+        </Grid>
+
+        <!-- signature: chromatogram ribbon -->
+        <Grid Margin="0,16,0,0" ColumnDefinitions="*" RowDefinitions="Auto,Auto">
+          <ctl:Chromatogram Grid.Row="0" Height="58" Sequence="{Binding SelectedPage.TraceSequence}" />
+          <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal">
+              <ToggleButton Classes="seg" Content="RESULT" IsChecked="{Binding !ShowCode}" Command="{Binding ShowResultCommand}" />
+              <ToggleButton Classes="seg" Content="LIVE CODE" IsChecked="{Binding ShowCode}" Command="{Binding ShowLiveCodeCommand}" />
+            </StackPanel>
+            <TextBlock Grid.Column="2" Text="{Binding SelectedPage.TraceLabel}" Classes="unit" VerticalAlignment="Center" />
+          </Grid>
+        </Grid>
+        <Border Height="1" Background="{StaticResource RuleBrush}" />
+      </StackPanel>
+
+      <!-- status line -->
+      <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource RuleBrush}" BorderThickness="0,1,0,0" Padding="32,7">
+        <TextBlock Text="{Binding SelectedPage.Status}" Classes="unit" />
+      </Border>
+
+      <Panel>
+        <ContentControl x:Name="PageHost" Content="{Binding SelectedPage.View}" IsVisible="{Binding !ShowCode}" Margin="32,18,32,16" />
+        <Border IsVisible="{Binding ShowCode}" Margin="32,18,32,16" Classes="well" Padding="0">
+          <DockPanel>
+            <Border DockPanel.Dock="Top" BorderBrush="{StaticResource RuleBrush}" BorderThickness="0,0,0,1" Padding="14,8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="C# · reproduces the result on screen" Classes="unit" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="dotnet add package Gravicode.Biotech.Net.*" Classes="unit" />
+              </Grid>
+            </Border>
+            <ae:TextEditor x:Name="CodeEditor" IsReadOnly="True" ShowLineNumbers="True" FontSize="13"
+                           FontFamily="{StaticResource MonoFont}" Background="{StaticResource BenchBrush}"
+                           Foreground="{StaticResource InkBrush}" Padding="10,8"
+                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
+          </DockPanel>
+        </Border>
+      </Panel>
+    </DockPanel>
+  </Grid>
+</Window>

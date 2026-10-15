@@ -1,0 +1,10 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!csharp
+
+// Loaded automatically by .NET Interactive when the Gravicode.Biotech.Net.Notebooks package is referenced.
+// Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil
+Biotech.Net.Notebooks.BiotechFormatters.Register();
+display(Microsoft.DotNet.Interactive.Kernel.HTML(Biotech.Net.Notebooks.BiotechFormatters.BannerHtml()));

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Visualization</RootNamespace>
+    <Description>Biological visualisation on Visual.Net: genome browser, heatmap, volcano, PCA, UMAP, protein and molecule viewers. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+    <ProjectReference Include="../Biotech.Net.Genomics/Biotech.Net.Genomics.csproj" />
+    <ProjectReference Include="../Biotech.Net.Transcriptomics/Biotech.Net.Transcriptomics.csproj" />
+    <ProjectReference Include="../Biotech.Net.StructuralBiology/Biotech.Net.StructuralBiology.csproj" />
+    <ProjectReference Include="../Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Gravicode.Visual.Net.Core" />
+    <PackageReference Include="Gravicode.Matplotlib.Net" />
+    <PackageReference Include="Gravicode.Plotly.Net" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Visualization.Tests" />
+  </ItemGroup>
+
+</Project>

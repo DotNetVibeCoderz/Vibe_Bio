@@ -1,0 +1,89 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# 06 · Cheminformatics
+
+**EN** — Parse molecules from SMILES, depict them in 2-D, compute drug-likeness descriptors, and compare a small set of drugs side by side.
+
+**ID** — Mengurai molekul dari SMILES, menggambarnya dalam 2-D, menghitung deskriptor kemiripan obat (drug-likeness), dan membandingkan sekumpulan kecil obat secara berdampingan.
+
+*Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil*
+
+#!csharp
+
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+// Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
+// #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
+
+#!csharp
+
+using Biotech.Net.Chemistry;
+using Biotech.Net.Visualization;
+using Biotech.Net.Notebooks;
+
+BiotechFormatters.Register();
+
+#!markdown
+
+## One molecule · Satu molekul
+
+The formatter shows the 2-D depiction, SMILES and key descriptors.
+Formatter menampilkan gambar 2-D, SMILES, dan deskriptor utama.
+
+#!csharp
+
+var aspirin = Molecule.FromSmiles("CC(=O)Oc1ccccc1C(=O)O", "aspirin");
+aspirin
+
+#!csharp
+
+MolecularDescriptors.Compute(aspirin)
+
+#!markdown
+
+## Custom depiction · Gambar kustom
+
+#!csharp
+
+new MoleculeViewer(Molecule.FromSmiles("Cn1cnc2c1c(=O)n(C)c(=O)n2C", "caffeine"), 480, 360)
+{
+    ShowAtomIndices = true,
+    HighlightAtoms = [0, 1, 2, 3, 4],
+    Theme = BioTheme.Dark,
+}
+
+#!markdown
+
+## A small drug panel · Panel obat kecil
+
+#!csharp
+
+var drugs = new (string Name, string Smiles)[]
+{
+    ("ibuprofen", "CC(C)Cc1ccc(cc1)C(C)C(=O)O"),
+    ("paracetamol", "CC(=O)Nc1ccc(O)cc1"),
+    ("caffeine", "Cn1cnc2c1c(=O)n(C)c(=O)n2C"),
+    ("metformin", "CN(C)C(=N)NC(=N)N"),
+    ("nicotine", "CN1CCC[C@H]1c1cccnc1"),
+};
+var molecules = drugs.Select(d => Molecule.FromSmiles(d.Smiles, d.Name)).ToList();
+
+var table = molecules.Select(m => MolecularDescriptors.Compute(m)).Select((d, i) => new
+{
+    molecule = molecules[i].Name,
+    d.Formula,
+    MW = Math.Round(d.MolecularWeight, 2),
+    LogP = Math.Round(d.LogP, 2),
+    TPSA = Math.Round(d.Tpsa, 1),
+    HBD = d.HBondDonors,
+    HBA = d.HBondAcceptors,
+    Lipinski = DrugLikeness.Lipinski(d).ToString(),
+});
+table
+
+#!csharp
+
+molecules.Select(m => HTML(new MoleculeViewer(m, 260, 200).ToHtml(interactive: false)))

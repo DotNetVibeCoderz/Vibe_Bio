@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.AI</RootNamespace>
+    <Description>Biological AI models through HF.Net: BioBERT, PubMedBERT, DNABERT, ProtBERT, ESM and Geneformer. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Gravicode.HFNet.GraviHub" />
+    <PackageReference Include="Gravicode.HFNet.GraviTokenizers" />
+    <PackageReference Include="Gravicode.HFNet.GraviTransformers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.AI.Tests" />
+  </ItemGroup>
+
+</Project>

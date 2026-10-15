@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Notebooks</RootNamespace>
+    <Description>Polyglot / .NET Interactive / Jupyter formatters for Biotech.Net types. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+    <ProjectReference Include="../Biotech.Net.Alignments/Biotech.Net.Alignments.csproj" />
+    <ProjectReference Include="../Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+    <ProjectReference Include="../Biotech.Net.StructuralBiology/Biotech.Net.StructuralBiology.csproj" />
+    <ProjectReference Include="../Biotech.Net.Visualization/Biotech.Net.Visualization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- .NET Interactive runs this script when the package is referenced with #r "nuget:...". -->
+    <None Include="extension.dib" Pack="true" PackagePath="interactive-extensions/dotnet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Notebooks.Tests" />
+  </ItemGroup>
+
+</Project>

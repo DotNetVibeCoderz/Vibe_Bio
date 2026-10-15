@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Alignments</RootNamespace>
+    <Description>Pairwise (global, local, semi-global, affine gaps) and multiple sequence alignment with substitution matrices. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <!-- NCBI-format substitution matrices, loaded by SubstitutionMatrix.Load("BLOSUM62") etc. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Matrices/*.txt" LogicalName="Biotech.Net.Alignments.Matrices.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Alignments.Tests" />
+  </ItemGroup>
+
+</Project>

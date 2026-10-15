@@ -1,0 +1,77 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# 01 · Getting started with Biotech.Net
+
+**EN** — Biotech.Net is a biotechnology and bioinformatics platform for .NET 10 (think Bioconductor + Biopython), with Rust-accelerated kernels. This notebook loads the packages, turns on the rich notebook formatters and shows the core types.
+
+**ID** — Biotech.Net adalah platform bioteknologi dan bioinformatika untuk .NET 10 (seperti Bioconductor + Biopython) dengan kernel yang dipercepat Rust. Notebook ini memuat paket, mengaktifkan formatter notebook, dan memperkenalkan tipe-tipe inti.
+
+*Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil*
+
+#!csharp
+
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+// Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
+// #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
+
+#!csharp
+
+using Biotech.Net.Core;
+using Biotech.Net.Notebooks;
+
+BiotechFormatters.Register();   // also runs automatically when the NuGet package is loaded
+BiotechInfo.Banner
+
+#!markdown
+
+## Sequences · Sekuens
+
+A `Sequence` keeps ASCII bytes; the formatter colours bases and shows length and GC.
+Sebuah `Sequence` menyimpan byte ASCII; formatter mewarnai basa dan menampilkan panjang serta GC.
+
+#!csharp
+
+var dna = Sequence.Dna("ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG", "demo", "toy open reading frame");
+dna
+
+#!csharp
+
+dna.ReverseComplement()
+
+#!csharp
+
+dna.Translate(toStop: true)
+
+#!markdown
+
+## Proteins, intervals and variants · Protein, interval, dan varian
+
+Coordinates: `GenomicInterval` is 0-based half-open; `Variant.Position` is 1-based like VCF.
+Koordinat: `GenomicInterval` berbasis 0 setengah-terbuka; `Variant.Position` berbasis 1 seperti VCF.
+
+#!csharp
+
+Protein.FromString("P69905", "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR", "Hemoglobin subunit alpha")
+
+#!csharp
+
+GenomicInterval.Parse("chr17:7,668,402-7,687,550:-")
+
+#!csharp
+
+new Variant("chr7", 117559590, "ATCT", "A", "rs113993960") { Quality = 99 }
+
+#!markdown
+
+## Datasets · Dataset
+
+#!csharp
+
+var counts = Dataset.FromArray("counts", new double[,] { { 10, 12, 80, 95 }, { 300, 280, 310, 290 }, { 5, 0, 40, 33 } },
+    ["geneA", "geneB", "geneC"], ["ctl1", "ctl2", "trt1", "trt2"]);
+counts.Annotate("condition", "ctl", "ctl", "trt", "trt");
+counts

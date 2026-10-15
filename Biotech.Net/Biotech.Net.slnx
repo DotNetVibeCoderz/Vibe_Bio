@@ -1,0 +1,40 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Biotech.Net.AI/Biotech.Net.AI.csproj" />
+    <Project Path="src/Biotech.Net.Alignments/Biotech.Net.Alignments.csproj" />
+    <Project Path="src/Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+    <Project Path="src/Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <Project Path="src/Biotech.Net.DrugDiscovery/Biotech.Net.DrugDiscovery.csproj" />
+    <Project Path="src/Biotech.Net.Genomics/Biotech.Net.Genomics.csproj" />
+    <Project Path="src/Biotech.Net.Native/Biotech.Net.Native.csproj" />
+    <Project Path="src/Biotech.Net.Notebooks/Biotech.Net.Notebooks.csproj" />
+    <Project Path="src/Biotech.Net.Proteomics/Biotech.Net.Proteomics.csproj" />
+    <Project Path="src/Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+    <Project Path="src/Biotech.Net.StructuralBiology/Biotech.Net.StructuralBiology.csproj" />
+    <Project Path="src/Biotech.Net.SyntheticBiology/Biotech.Net.SyntheticBiology.csproj" />
+    <Project Path="src/Biotech.Net.Transcriptomics/Biotech.Net.Transcriptomics.csproj" />
+    <Project Path="src/Biotech.Net.Visualization/Biotech.Net.Visualization.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Biotech.Net.Gallery/Biotech.Net.Gallery.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Biotech.Net.AI.Tests/Biotech.Net.AI.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Alignments.Tests/Biotech.Net.Alignments.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Chemistry.Tests/Biotech.Net.Chemistry.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Core.Tests/Biotech.Net.Core.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.DrugDiscovery.Tests/Biotech.Net.DrugDiscovery.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Genomics.Tests/Biotech.Net.Genomics.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Native.Tests/Biotech.Net.Native.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Notebooks.Tests/Biotech.Net.Notebooks.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Proteomics.Tests/Biotech.Net.Proteomics.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Sequences.Tests/Biotech.Net.Sequences.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.StructuralBiology.Tests/Biotech.Net.StructuralBiology.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.SyntheticBiology.Tests/Biotech.Net.SyntheticBiology.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Transcriptomics.Tests/Biotech.Net.Transcriptomics.Tests.csproj" />
+    <Project Path="tests/Biotech.Net.Visualization.Tests/Biotech.Net.Visualization.Tests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Biotech.Net.Benchmarks/Biotech.Net.Benchmarks.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Genomics</RootNamespace>
+    <NoWarn>$(NoWarn);CS1573</NoWarn>
+    <Description>Genome assembly, annotation, variant analysis (VCF) and population genetics. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Genomics.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    BenchmarkDotNet suite: Rust kernels vs the managed fallback, plus parser / cheminformatics /
+    normalisation throughput. Run in Release:
+      dotnet run -c Release -p:SkipRustBuild=true  (arguments: see Program.cs)
+    Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Optimize>true</Optimize>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <NoWarn>$(NoWarn);CA1822</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Biotech.Net.Native/Biotech.Net.Native.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Genomics/Biotech.Net.Genomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Transcriptomics/Biotech.Net.Transcriptomics.csproj" />
+  </ItemGroup>
+
+</Project>

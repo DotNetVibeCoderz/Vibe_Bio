@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.StructuralBiology</RootNamespace>
+    <NoWarn>$(NoWarn);CS1573</NoWarn>
+    <Description>Macromolecular structures: PDB/mmCIF models, geometry, superposition, contacts and secondary structure. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data/1crn.pdb" LogicalName="Biotech.Net.StructuralBiology.Data.1crn.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.StructuralBiology.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,267 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Biotech.Net.Gallery.App"
+             RequestedThemeVariant="Dark">
+
+  <!--
+    Visual direction: "the bench instrument". The Gallery reads like the front panel of a capillary sequencer /
+    fluorescence imager: a dark, blue-slate chassis, hairline-ruled panels, condensed DIN-style labels (Bahnschrift),
+    monospaced readouts, and colour taken only from the four dye channels of Sanger chemistry
+    (A = FAM green, C = Cy5 blue, G = HEX amber, T = ROX red). Amber doubles as the instrument's indicator lamp:
+    it marks the one action and the one selection on each screen. Signature: a live chromatogram ribbon in every
+    page header, drawn from that page's own sequence.
+  -->
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <!-- Chassis -->
+      <Color x:Key="BenchColor">#0B1015</Color>
+      <Color x:Key="DeckColor">#111921</Color>
+      <Color x:Key="RaisedColor">#17212B</Color>
+      <Color x:Key="RuleColor">#233140</Color>
+      <Color x:Key="InkColor">#E2E8EE</Color>
+      <Color x:Key="Ink2Color">#93A3B2</Color>
+      <Color x:Key="Ink3Color">#5E6F7F</Color>
+      <!-- Dye channels -->
+      <Color x:Key="DyeAColor">#3FD69B</Color>
+      <Color x:Key="DyeCColor">#4EA3FF</Color>
+      <Color x:Key="DyeGColor">#F0B03F</Color>
+      <Color x:Key="DyeTColor">#FF6363</Color>
+
+      <SolidColorBrush x:Key="BenchBrush" Color="{StaticResource BenchColor}" />
+      <SolidColorBrush x:Key="DeckBrush" Color="{StaticResource DeckColor}" />
+      <SolidColorBrush x:Key="RaisedBrush" Color="{StaticResource RaisedColor}" />
+      <SolidColorBrush x:Key="RuleBrush" Color="{StaticResource RuleColor}" />
+      <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}" />
+      <SolidColorBrush x:Key="Ink2Brush" Color="{StaticResource Ink2Color}" />
+      <SolidColorBrush x:Key="Ink3Brush" Color="{StaticResource Ink3Color}" />
+      <SolidColorBrush x:Key="LampBrush" Color="{StaticResource DyeGColor}" />
+      <SolidColorBrush x:Key="DyeABrush" Color="{StaticResource DyeAColor}" />
+      <SolidColorBrush x:Key="DyeCBrush" Color="{StaticResource DyeCColor}" />
+      <SolidColorBrush x:Key="DyeGBrush" Color="{StaticResource DyeGColor}" />
+      <SolidColorBrush x:Key="DyeTBrush" Color="{StaticResource DyeTColor}" />
+      <SolidColorBrush x:Key="LampInkBrush" Color="#1B1304" />
+
+      <FontFamily x:Key="DisplayFont">Bahnschrift, Inter, Segoe UI</FontFamily>
+      <FontFamily x:Key="BodyFont">Inter, Segoe UI</FontFamily>
+      <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Menlo, monospace</FontFamily>
+
+      <!-- Fluent overrides so stock controls sit on the chassis -->
+      <SolidColorBrush x:Key="TextControlBackground" Color="{StaticResource BenchColor}" />
+      <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource BenchColor}" />
+      <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{StaticResource BenchColor}" />
+      <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource RuleColor}" />
+      <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#34485A" />
+      <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource DyeGColor}" />
+      <SolidColorBrush x:Key="ComboBoxBackground" Color="{StaticResource BenchColor}" />
+      <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{StaticResource RaisedColor}" />
+      <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource RuleColor}" />
+      <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{StaticResource RaisedColor}" />
+      <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="{StaticResource DyeGColor}" />
+      <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="{StaticResource DyeGColor}" />
+      <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="#1B1304" />
+      <SolidColorBrush x:Key="SliderTrackValueFill" Color="{StaticResource DyeGColor}" />
+      <SolidColorBrush x:Key="SliderThumbBackground" Color="{StaticResource DyeGColor}" />
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+      <Setter Property="Background" Value="{StaticResource BenchBrush}" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    </Style>
+
+    <!-- Type scale -->
+    <Style Selector="TextBlock.eyebrow">
+      <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="1.8" />
+      <Setter Property="Foreground" Value="{StaticResource Ink3Brush}" />
+    </Style>
+    <Style Selector="TextBlock.title">
+      <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+      <Setter Property="FontSize" Value="32" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="-0.4" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    </Style>
+    <Style Selector="TextBlock.lede">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Foreground" Value="{StaticResource Ink2Brush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="LineHeight" Value="19" />
+    </Style>
+    <Style Selector="TextBlock.h2">
+      <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="1.4" />
+      <Setter Property="Foreground" Value="{StaticResource Ink2Brush}" />
+    </Style>
+    <Style Selector="TextBlock.body">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="LineHeight" Value="19" />
+    </Style>
+    <Style Selector="TextBlock.caption">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource Ink3Brush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.mono, SelectableTextBlock.mono">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.readout">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    </Style>
+    <Style Selector="TextBlock.unit">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource Ink3Brush}" />
+    </Style>
+    <Style Selector="TextBlock.th">
+      <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="1.2" />
+      <Setter Property="Foreground" Value="{StaticResource Ink3Brush}" />
+    </Style>
+    <Style Selector="TextBlock.td">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Surfaces -->
+    <Style Selector="Border.panel">
+      <Setter Property="Background" Value="{StaticResource DeckBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource RuleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="16,14" />
+    </Style>
+    <Style Selector="Border.well">
+      <Setter Property="Background" Value="{StaticResource BenchBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource RuleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="Padding" Value="10,8" />
+    </Style>
+    <Style Selector="Border.tag">
+      <Setter Property="BorderBrush" Value="{StaticResource RuleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Padding" Value="6,2" />
+    </Style>
+
+    <!-- Buttons -->
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{StaticResource LampBrush}" />
+      <Setter Property="Foreground" Value="{StaticResource LampInkBrush}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="16,7" />
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#F6C266" />
+      <Setter Property="Foreground" Value="{StaticResource LampInkBrush}" />
+    </Style>
+    <Style Selector="Button.quiet">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource RuleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="12,6" />
+    </Style>
+    <Style Selector="Button.quiet:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource RaisedBrush}" />
+      <Setter Property="BorderBrush" Value="#34485A" />
+    </Style>
+    <Style Selector="Button.chip">
+      <Setter Property="Background" Value="{StaticResource RaisedBrush}" />
+      <Setter Property="Foreground" Value="{StaticResource Ink2Brush}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Padding" Value="8,3" />
+      <Setter Property="CornerRadius" Value="2" />
+    </Style>
+    <Style Selector="Button.chip:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#22303D" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    </Style>
+
+    <!-- Navigation rail -->
+    <Style Selector="Button.nav">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource Ink2Brush}" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#131C25" />
+    </Style>
+    <Style Selector="Button.nav.active /template/ ContentPresenter">
+      <Setter Property="Background" Value="#16212C" />
+    </Style>
+    <Style Selector="Button.nav.active">
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    </Style>
+
+    <!-- Result / Live code switch -->
+    <Style Selector="ToggleButton.seg">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource Ink3Brush}" />
+      <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="1.4" />
+      <Setter Property="Padding" Value="14,6" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ToggleButton.seg:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    </Style>
+    <Style Selector="ToggleButton.seg:checked /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource LampBrush}" />
+    </Style>
+
+    <!-- Inputs -->
+    <Style Selector="TextBox">
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBox.seq">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="AcceptsReturn" Value="True" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="ScrollViewer">
+      <Setter Property="AllowAutoHide" Value="True" />
+    </Style>
+  </Application.Styles>
+</Application>

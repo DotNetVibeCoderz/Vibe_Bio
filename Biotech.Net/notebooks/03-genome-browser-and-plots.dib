@@ -1,0 +1,106 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# 03 · Genome browser and plots
+
+**EN** — Build a static genome-browser view (ruler, gene models with exons/UTRs/strand, features, coverage, variant lollipops), then export it as PNG, SVG and HTML. Every plot uses the shared Biotech.Net theme (light or dark).
+
+**ID** — Membuat tampilan genome browser statis (penggaris, model gen dengan ekson/UTR/arah untai, fitur, cakupan, lollipop varian), lalu mengekspornya ke PNG, SVG, dan HTML. Semua plot memakai tema Biotech.Net yang sama (terang atau gelap).
+
+*Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil*
+
+#!csharp
+
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+// Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
+// #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
+
+#!csharp
+
+using Biotech.Net.Core;
+using Biotech.Net.Visualization;
+using Biotech.Net.Notebooks;
+
+BiotechFormatters.Register();
+
+#!markdown
+
+## A small annotated region · Wilayah beranotasi kecil
+
+Intervals are 0-based half-open; variants use 1-based positions.
+Interval berbasis 0 setengah-terbuka; varian memakai posisi berbasis 1.
+
+#!csharp
+
+var region = GenomicInterval.Parse("chr1:1,001-6,000");
+
+var alpha = new Gene("G1", new GenomicInterval("chr1", 1200, 3400, Strand.Forward), "ALPHA");
+alpha.Transcripts.Add(new Transcript("ALPHA-201", "G1",
+    [new("chr1", 1200, 1500, Strand.Forward), new("chr1", 2000, 2300, Strand.Forward), new("chr1", 3000, 3400, Strand.Forward)])
+    { CodingRegion = new GenomicInterval("chr1", 1350, 3200, Strand.Forward) });
+alpha.Transcripts.Add(new Transcript("ALPHA-202", "G1",
+    [new("chr1", 1200, 1500, Strand.Forward), new("chr1", 3000, 3400, Strand.Forward)])
+    { CodingRegion = new GenomicInterval("chr1", 1350, 3200, Strand.Forward) });
+var beta = new Gene("G2", new GenomicInterval("chr1", 3800, 5600, Strand.Reverse), "BETA-AS1", "lncRNA");
+beta.Transcripts.Add(new Transcript("BETA-AS1-201", "G2", [new("chr1", 3800, 4200, Strand.Reverse), new("chr1", 5000, 5600, Strand.Reverse)]));
+
+var depth = Enumerable.Range(0, 5000).Select(i => 25 + 12 * Math.Sin(i / 280.0) + (i is > 1200 and < 1500 ? 35 : 0)).ToArray();
+
+var variants = new List<Variant>
+{
+    new("chr1", 1400, "A", "G", "rs1001"),
+    new("chr1", 2101, "C", "T"),
+    new("chr1", 4000, "AT", "A"),
+    new("chr1", 5200, "G", "GTT") { Filter = "LowQual" },
+};
+
+var promoter = new SequenceFeature("promoter", FeatureLocation.Span(1050, 1200, Strand.Forward)).With("label", "P_alpha");
+
+var browser = new GenomeBrowser(region, width: 1000) { Title = "ALPHA locus" }
+    .AddRuler()
+    .AddGenes([alpha, beta])
+    .AddFeatures([promoter])
+    .AddCoverage(depth, start: 1000, name: "RNA-seq depth")
+    .AddVariants(variants);
+browser
+
+#!markdown
+
+## Export · Ekspor
+
+#!csharp
+
+browser.Save("alpha-locus.png");
+browser.Save("alpha-locus.svg");
+browser.Save("alpha-locus.html");
+browser.Theme = BioTheme.Dark;
+browser
+
+#!markdown
+
+## Heatmap with clustering · Heatmap dengan klasterisasi
+
+Rows are z-scored, then rows and columns are clustered (average linkage) and drawn with dendrograms.
+Baris di-z-score, lalu baris dan kolom diklaster (average linkage) dan digambar dengan dendrogram.
+
+#!csharp
+
+var rng = new Random(3);
+var values = new double[30, 8];
+for (int i = 0; i < 30; i++)
+    for (int j = 0; j < 8; j++)
+        values[i, j] = rng.NextDouble() + ((i < 15) == (j < 4) ? 3 : 0);
+
+new Heatmap(values, Enumerable.Range(1, 30).Select(i => $"gene{i}").ToArray(), Enumerable.Range(1, 8).Select(i => $"S{i}").ToArray())
+{
+    Title = "Expression (z-score)",
+    ColumnGroups = ["ctl", "ctl", "ctl", "ctl", "trt", "trt", "trt", "trt"],
+}
+
+#!csharp
+
+// Plots are also static images on demand · Plot juga bisa berupa gambar statis
+HTML(BiotechHtml.Plot(new SequenceLogo(new[] { "ACGTG", "ACGTA", "ACGTG", "TCGTG" }), PlotEmbedding.Png))

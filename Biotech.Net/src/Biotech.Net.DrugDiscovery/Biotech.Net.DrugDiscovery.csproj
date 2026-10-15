@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.DrugDiscovery</RootNamespace>
+    <Description>Drug discovery: virtual screening, target prediction, ADMET and lead optimisation. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+    <ProjectReference Include="../Biotech.Net.StructuralBiology/Biotech.Net.StructuralBiology.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.DrugDiscovery.Tests" />
+  </ItemGroup>
+
+</Project>

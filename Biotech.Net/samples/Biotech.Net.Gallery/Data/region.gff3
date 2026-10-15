@@ -1,0 +1,29 @@
+##gff-version 3
+##sequence-region chrDemo 1 12000
+chrDemo	Gallery	gene	1001	3700	.	+	.	ID=geneA;Name=BNX1;biotype=protein_coding
+chrDemo	Gallery	mRNA	1001	3700	.	+	.	ID=geneA.1;Parent=geneA
+chrDemo	Gallery	exon	1001	1400	.	+	.	ID=geneA.1.e1;Parent=geneA.1
+chrDemo	Gallery	exon	2001	2390	.	+	.	ID=geneA.1.e2;Parent=geneA.1
+chrDemo	Gallery	exon	3101	3700	.	+	.	ID=geneA.1.e3;Parent=geneA.1
+chrDemo	Gallery	CDS	1101	1400	.	+	0	Parent=geneA.1
+chrDemo	Gallery	CDS	2001	2390	.	+	0	Parent=geneA.1
+chrDemo	Gallery	CDS	3101	3400	.	+	0	Parent=geneA.1
+chrDemo	Gallery	mRNA	1001	3700	.	+	.	ID=geneA.2;Parent=geneA
+chrDemo	Gallery	exon	1001	1400	.	+	.	ID=geneA.2.e1;Parent=geneA.2
+chrDemo	Gallery	exon	3101	3700	.	+	.	ID=geneA.2.e2;Parent=geneA.2
+chrDemo	Gallery	CDS	1101	1400	.	+	0	Parent=geneA.2
+chrDemo	Gallery	CDS	3101	3400	.	+	0	Parent=geneA.2
+chrDemo	Gallery	gene	5201	7100	.	-	.	ID=geneB;Name=BNX2;biotype=protein_coding
+chrDemo	Gallery	mRNA	5201	7100	.	-	.	ID=geneB.1;Parent=geneB
+chrDemo	Gallery	exon	5201	5800	.	-	.	ID=geneB.1.e1;Parent=geneB.1
+chrDemo	Gallery	exon	6501	7100	.	-	.	ID=geneB.1.e2;Parent=geneB.1
+chrDemo	Gallery	CDS	5351	5800	.	-	0	Parent=geneB.1
+chrDemo	Gallery	CDS	6501	6950	.	-	0	Parent=geneB.1
+chrDemo	Gallery	gene	8801	11500	.	+	.	ID=geneC;Name=TRP7;biotype=protein_coding
+chrDemo	Gallery	mRNA	8801	11500	.	+	.	ID=geneC.1;Parent=geneC
+chrDemo	Gallery	exon	8801	9400	.	+	.	ID=geneC.1.e1;Parent=geneC.1
+chrDemo	Gallery	exon	9901	10300	.	+	.	ID=geneC.1.e2;Parent=geneC.1
+chrDemo	Gallery	exon	10801	11500	.	+	.	ID=geneC.1.e3;Parent=geneC.1
+chrDemo	Gallery	CDS	8901	9400	.	+	0	Parent=geneC.1
+chrDemo	Gallery	CDS	9901	10300	.	+	0	Parent=geneC.1
+chrDemo	Gallery	CDS	10801	11199	.	+	0	Parent=geneC.1

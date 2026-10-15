@@ -1,0 +1,77 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"languageName":"csharp","name":"csharp"}]}}
+
+#!markdown
+
+# 05 · Protein structure
+
+**EN** — Load crambin (PDB 1CRN), view it in 3-D (3Dmol.js), assign secondary structure with DSSP, and draw a 2-D Cα trace and a contact map.
+
+**ID** — Memuat crambin (PDB 1CRN), menampilkannya dalam 3-D (3Dmol.js), menentukan struktur sekunder dengan DSSP, serta menggambar jejak Cα 2-D dan peta kontak.
+
+*Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil*
+
+#!csharp
+
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+// Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
+// #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
+
+#!csharp
+
+using Biotech.Net.Core;
+using Biotech.Net.StructuralBiology;
+using Biotech.Net.Visualization;
+using Biotech.Net.Notebooks;
+
+BiotechFormatters.Register();
+
+#!markdown
+
+## Interactive 3-D view · Tampilan 3-D interaktif
+
+Rotate with the mouse, scroll to zoom. 3Dmol.js is loaded from a pinned CDN version.
+Putar dengan tetikus, gulir untuk memperbesar. 3Dmol.js dimuat dari CDN dengan versi tetap.
+
+#!csharp
+
+var crambin = SampleStructures.Crambin();
+crambin
+
+#!csharp
+
+HTML(ProteinViewer.To3DHtml(crambin, new Viewer3DOptions { Coloring = ResidueColoring.SecondaryStructure, Style = MolecularStyle.Cartoon }))
+
+#!markdown
+
+## Secondary structure · Struktur sekunder
+
+#!csharp
+
+var dssp = Dssp.Assign(crambin);
+dssp.ToSecondaryStructureString()
+
+#!csharp
+
+new CaTracePlot(crambin) { Coloring = ResidueColoring.SecondaryStructure, LabelEvery = 5 }
+
+#!markdown
+
+## Contacts · Kontak
+
+#!csharp
+
+ProteinViewer.ContactMap(crambin, cutoff: 8.0)
+
+#!csharp
+
+new ContactMapPlot(crambin) { ShowDistances = true }
+
+#!markdown
+
+## The chain as a protein · Rantai sebagai protein
+
+#!csharp
+
+new Protein("1CRN_A", crambin["A"].ToSequence(), "Crambin") { Organism = "Crambe hispanica", StructureId = "1CRN" }
