@@ -1,0 +1,259 @@
+@page "/playground"
+@using System.Runtime.CompilerServices
+@using Biotech.Net.WebGallery.Playground
+@using Microsoft.AspNetCore.Components.WebAssembly.Services
+@implements IDisposable
+@inject LazyAssemblyLoader Loader
+@inject IJSRuntime JS
+@inject PlaygroundState State
+
+<PageFrame Title="C# Playground" Modules="ROSLYN IN WEBASSEMBLY · EVERY BIOTECH.NET MODULE"
+           Lede="Edit a snippet and run it. Roslyn compiles it inside this tab against the Biotech.Net assemblies the page has already loaded; Console output prints below and Show(...) renders figures, molecules and structures."
+           Trace="@trace" TraceLabel="@traceLabel" Status="@status">
+    <div class="playground">
+        <aside class="presets" aria-label="Examples">
+            <div class="eyebrow">Examples · from the tutorials</div>
+            @foreach (var p in Presets.All)
+            {
+                <button type="button" class="preset @(p.Id == presetId ? "on" : "")" @onclick="() => Pick(p)">
+                    <span class="preset-title">@p.Title</span>
+                    <span class="preset-module">@p.Module</span>
+                </button>
+            }
+            <p class="caption">Ctrl+Enter runs. Tab indents. Snippets are top-level statements; <code>System.*</code>, <code>Biotech.Net.Core</code> and <code>Show()</code> are imported for you.</p>
+        </aside>
+
+        <section class="editor-col">
+            <div class="well editor-well">
+                <div class="code-head">
+                    <span class="unit">@(editorTitle ?? "Snippet.cs")</span>
+                    <span class="code-actions">
+                        <span class="unit compiler-state @(compilerReady ? "ready" : "")">@compilerState</span>
+                        <button class="quiet small" type="button" @onclick="Reset" disabled="@(presetId is null && pendingTitle is null)">Reset</button>
+                        <button class="primary" type="button" @onclick="Run" disabled="@(running || compilerFailed)">@(running ? "Running…" : "Run ▶")</button>
+                    </span>
+                </div>
+                <div class="editor">
+                    <div class="gutter" aria-hidden="true">@((MarkupString)gutter)</div>
+                    <textarea @ref="editor" class="code-input" spellcheck="false" autocapitalize="off" autocomplete="off"
+                              aria-label="C# snippet" @bind="code" @bind:event="oninput" @bind:after="CodeChanged"></textarea>
+                </div>
+            </div>
+
+            <div class="output">
+                <div class="output-head">
+                    <span class="eyebrow">Output</span>
+                    <span class="unit">@timing</span>
+                </div>
+                @if (diagnostics.Count > 0)
+                {
+                    <ul class="diagnostics">
+                        @foreach (var d in diagnostics)
+                        {
+                            <li class="@d.Severity"><span class="where">@(d.Line > 0 ? $"({d.Line},{d.Column})" : "")</span> <b>@d.Id</b> @d.Message</li>
+                        }
+                    </ul>
+                }
+                @if (consoleText is not null)
+                {
+                    <pre class="console">@(consoleText.Length == 0 && exception is null && outputs.Count == 0 ? "(no console output)" : consoleText)</pre>
+                }
+                @if (exception is not null)
+                {
+                    <pre class="console exception">@exception</pre>
+                }
+                @foreach (var o in outputs)
+                {
+                    <figure class="show">
+                        @if (o.Kind == "svg")
+                        {
+                            <div class="figure-well">@((MarkupString)o.Content)</div>
+                        }
+                        else if (o.Kind == "html")
+                        {
+                            <iframe class="viewer3d" sandbox="allow-scripts" srcdoc="@o.Content" title="@o.Caption"></iframe>
+                        }
+                        else
+                        {
+                            <pre class="console">@o.Content</pre>
+                        }
+                        <figcaption class="unit">Show · @o.Caption</figcaption>
+                    </figure>
+                }
+                @if (consoleText is null && diagnostics.Count == 0)
+                {
+                    <p class="caption empty">Run the snippet to see its output here.</p>
+                }
+            </div>
+        </section>
+    </div>
+</PageFrame>
+
+@code {
+    private ElementReference editor;
+    private DotNetObjectReference<PlaygroundPage>? self;
+    private string code = "";
+    private string? presetId, pendingTitle, pendingCode, editorTitle;
+    private string gutter = "";
+    private bool running, compilerReady, compilerFailed;
+    private string compilerState = "compiler not loaded";
+    private string? consoleText, exception, trace, traceLabel;
+    private string status = "Loading Roslyn (Microsoft.CodeAnalysis) on demand…", timing = "";
+    private List<SnippetDiagnostic> diagnostics = [];
+    private IReadOnlyList<SnippetOutput> outputs = [];
+
+    protected override void OnInitialized()
+    {
+        if (State.Pending is { } pending)
+        {
+            State.Pending = null;
+            pendingTitle = pending.Title;
+            pendingCode = pending.Code;
+            code = pending.Code;
+            editorTitle = $"{pending.Title} · live code";
+        }
+        else if (State.Draft is { } draft)
+        {
+            code = draft;
+            editorTitle = State.DraftTitle;
+            presetId = Presets.All.FirstOrDefault(p => p.Title == State.DraftTitle)?.Id;
+        }
+        else
+        {
+            var p = Presets.Default;
+            code = p.Code;
+            presetId = p.Id;
+            editorTitle = p.Title;
+        }
+        UpdateGutter();
+        trace = GalleryData.TextToBases(code);
+        traceLabel = "TRACE · snippet encoded 2 bases/char";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        self = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("gallery.attachEditor", editor, self);
+        await EnsureCompilerAsync();
+    }
+
+    private async Task EnsureCompilerAsync()
+    {
+        if (compilerReady || compilerFailed) return;
+        try
+        {
+            compilerState = "downloading Roslyn…";
+            StateHasChanged();
+            var sw = Stopwatch.StartNew();
+            await Loader.LoadAssembliesAsync(["Microsoft.CodeAnalysis.wasm", "Microsoft.CodeAnalysis.CSharp.wasm"]);
+            double download = sw.Elapsed.TotalSeconds;
+            compilerState = "warming up the compiler…";
+            StateHasChanged();
+            await JS.InvokeVoidAsync("gallery.nextFrame");
+            var warm = WarmCompiler();
+            compilerReady = true;
+            compilerState = "compiler ready";
+            status = $"Roslyn loaded in {download:0.0} s and warmed up in {warm.TotalSeconds:0.0} s · {ReferenceCount()} assemblies referenced from memory · kernels {BiotechInfo.Backend}";
+        }
+        catch (Exception ex)
+        {
+            compilerFailed = true;
+            compilerState = "compiler unavailable";
+            status = "The C# compiler could not start in this browser: " + ex.Message;
+            exception = ex.ToString();
+            consoleText = "";
+        }
+        StateHasChanged();
+    }
+
+    // Kept out of line: the interpreter resolves Roslyn types only when these run, after the lazy load.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static TimeSpan WarmCompiler() => SnippetCompiler.Warm();
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int ReferenceCount() => SnippetCompiler.ReferenceCount;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static Task<SnippetRun> Execute(string source) => SnippetCompiler.RunAsync(source);
+
+    [JSInvokable]
+    public async Task RunFromKeyboard(string value)
+    {
+        code = value;
+        await Run();
+    }
+
+    private async Task Run()
+    {
+        if (running) return;
+        running = true;
+        status = "Compiling…";
+        StateHasChanged();
+        await JS.InvokeVoidAsync("gallery.nextFrame");
+        try
+        {
+            if (!compilerReady) await EnsureCompilerAsync();
+            if (!compilerReady) return;
+            var result = await Execute(code);
+            diagnostics = result.Diagnostics.ToList();
+            consoleText = result.Compiled ? result.Console : null;
+            exception = result.Exception;
+            outputs = result.Outputs;
+            timing = result.Compiled
+                ? $"compiled {result.CompileTime.TotalMilliseconds:0} ms · ran {result.RunTime.TotalMilliseconds:0} ms"
+                : $"{diagnostics.Count(d => d.Severity == "error")} error(s) · {result.CompileTime.TotalMilliseconds:0} ms";
+            status = result.Compiled
+                ? (exception is null ? $"Ran · {timing} · {outputs.Count} figure(s)" : "The snippet threw an exception.")
+                : "Compilation failed; see the errors below.";
+            trace = GalleryData.TextToBases(code);
+        }
+        finally
+        {
+            running = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Pick(Preset p)
+    {
+        presetId = p.Id;
+        pendingTitle = null;
+        editorTitle = p.Title;
+        code = p.Code;
+        State.Draft = null;
+        diagnostics = [];
+        consoleText = null;
+        exception = null;
+        outputs = [];
+        timing = "";
+        UpdateGutter();
+        trace = GalleryData.TextToBases(code);
+        await JS.InvokeVoidAsync("gallery.setValue", editor, code);
+    }
+
+    private async Task Reset()
+    {
+        if (pendingCode is not null) code = pendingCode;
+        else if (Presets.All.FirstOrDefault(x => x.Id == presetId) is { } p) code = p.Code;
+        UpdateGutter();
+        await JS.InvokeVoidAsync("gallery.setValue", editor, code);
+    }
+
+    private void CodeChanged()
+    {
+        State.Draft = code;
+        State.DraftTitle = editorTitle;
+        UpdateGutter();
+    }
+
+    private void UpdateGutter()
+    {
+        int lines = code.Count(c => c == '\n') + 1;
+        var sb = new System.Text.StringBuilder();
+        for (int i = 1; i <= lines; i++) sb.Append(i).Append('\n');
+        gutter = sb.ToString();
+    }
+
+    public void Dispose() => self?.Dispose();
+}

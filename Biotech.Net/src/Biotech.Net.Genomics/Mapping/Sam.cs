@@ -60,6 +60,34 @@ public static class Cigar
         return n;
     }
 
+    /// <summary>
+    /// The aligned (query position, reference position) pairs of a CIGAR starting at 0-based reference position
+    /// <paramref name="referenceStart"/>: query-only operations (I, S) give a null reference position, reference-only
+    /// operations (D, N) a null query position; H and P produce nothing. With <paramref name="matchesOnly"/> only
+    /// M/=/X pairs are returned.
+    /// </summary>
+    public static IEnumerable<(int? QueryPosition, int? ReferencePosition)> AlignedPairs(CigarElement[] cigar, int referenceStart, bool matchesOnly = false)
+    {
+        int q = 0, r = referenceStart;
+        foreach (var e in cigar)
+        {
+            switch (e.Op)
+            {
+                case 'M' or '=' or 'X':
+                    for (int i = 0; i < e.Length; i++) yield return (q++, r++);
+                    break;
+                case 'I' or 'S':
+                    if (matchesOnly) q += e.Length;
+                    else for (int i = 0; i < e.Length; i++) yield return (q++, null);
+                    break;
+                case 'D' or 'N':
+                    if (matchesOnly) r += e.Length;
+                    else for (int i = 0; i < e.Length; i++) yield return (null, r++);
+                    break;
+            }
+        }
+    }
+
     /// <summary>Run-length encodes single-character operations.</summary>
     internal static CigarElement[] Compress(IEnumerable<char> ops)
     {
@@ -158,6 +186,34 @@ public sealed class SamWriter : IDisposable
     /// <summary>Creates a writer whose header lists <paramref name="reference"/>.</summary>
     public SamWriter(TextWriter writer, IEnumerable<Sequence> reference, bool leaveOpen = false)
         : this(writer, reference.Select(s => (s.Id, (long)s.Length)), leaveOpen: leaveOpen) { }
+
+    /// <summary>Creates a writer that writes <paramref name="header"/> verbatim (for <see cref="AlignmentRecord"/> output).</summary>
+    public SamWriter(TextWriter writer, SamHeader header, bool leaveOpen = false)
+    {
+        _w = writer;
+        _leaveOpen = leaveOpen;
+        _sb = new StringBuilder(512);
+        var text = header.Text;
+        if (text.Length > 0) { _w.Write(text); if (text[^1] != '\n') _w.Write('\n'); }
+    }
+
+    private readonly StringBuilder? _sb;
+
+    /// <summary>Creates a SAM file with <paramref name="header"/> (gzip when the path ends in <c>.gz</c>).</summary>
+    public static SamWriter Create(string path, SamHeader header) => new(BioFile.CreateText(path), header);
+
+    /// <summary>Writes one alignment record.</summary>
+    public void Write(AlignmentRecord record)
+    {
+        var sb = _sb ?? new StringBuilder(512);
+        sb.Clear();
+        record.AppendSam(sb);
+        sb.Append('\n');
+        _w.Write(sb);
+    }
+
+    /// <summary>Writes alignment records.</summary>
+    public void Write(IEnumerable<AlignmentRecord> records) { foreach (var r in records) Write(r); }
 
     /// <summary>Creates a SAM file (gzip when the path ends in <c>.gz</c>).</summary>
     public static SamWriter Create(string path, IEnumerable<Sequence> reference) => new(BioFile.CreateText(path), reference);

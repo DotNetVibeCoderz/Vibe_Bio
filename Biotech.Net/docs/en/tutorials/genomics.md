@@ -4,7 +4,7 @@ Package: `Gravicode.Biotech.Net.Genomics`
 
 > Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil
 
-Variant files (VCF), variant-effect prediction, read mapping and SNV calling, de Bruijn assembly, prokaryotic gene finding and population genetics.
+Variant files (VCF, with tabix), alignment files (SAM, BAM, CRAM), variant-effect prediction, read mapping and SNV calling, de Bruijn assembly, prokaryotic gene finding and population genetics.
 
 Coordinates: `GenomicInterval` is 0-based half-open, and `Variant.Position` is 1-based as in VCF.
 
@@ -29,12 +29,12 @@ Console.WriteLine($"{header.Samples.Count} samples, {records.Count} records");
 foreach (var r in records.PassOnly())
     Console.WriteLine($"{r.Variant} {r.Variant.Type} AF={r.Variant.AlternateAlleleFrequency():F2} GT(S1)={r.GetGenotype(0)}");
 
-// Write back (bgzip/tabix are not supported yet; ".gz" paths are written as plain gzip)
+// Write back (VcfWriter.Create with a ".gz" path writes BGZF, which tabix can index; see section 6)
 var sw = new StringWriter();
 using (var writer = new VcfWriter(sw, header, leaveOpen: true)) writer.Write(records);
 ```
 
-For files on disk, `VcfReader.Open(path)` streams records, and `reader.Query(GenomicInterval)` filters them by region.
+For files on disk, `VcfReader.Open(path)` streams records, and `reader.Query(GenomicInterval)` filters them by region (through the tabix index when the file is a `.vcf.gz` with a `.tbi` or `.csi`).
 
 ## 2. Variant-effect prediction
 
@@ -87,7 +87,7 @@ var calls = SnvCaller.Call([reference], alignments);
 foreach (var call in calls) Console.WriteLine(call);
 ```
 
-`SamWriter` writes the alignments as SAM, and `SamReader` reads SAM produced by other tools.
+`SamWriter` writes the alignments as SAM, and `SamReader` reads SAM produced by other tools. To keep them as an indexed BAM, convert with `ToAlignmentRecord(header)`, sort with `CoordinateComparer.Sort` and write with `BamWriter` (section 6); `Pileup.AddRange` also accepts records read back from BAM or CRAM.
 
 ## 4. Assembly and gene finding
 
@@ -133,9 +133,78 @@ The genome browser in `Biotech.Net.Visualization` draws genes, coverage and vari
 
 ![Genome browser](../../images/genome-browser.png)
 
+## 6. BAM, CRAM and tabix
+
+BAM and CRAM records are read into `AlignmentRecord` (0-based `Position`, typed optional fields). Region strings follow samtools (`chr1:1001-1100`, 1-based inclusive); the `Query(name, start, end)` overloads take 0-based half-open coordinates.
+
+```csharp
+using Biotech.Net.Genomics.IO;
+using Biotech.Net.Genomics.Mapping;
+
+var header = SamHeader.Create([("chr1", 10_000L)], sortOrder: "coordinate");
+var rng = new Random(1);
+var records = new List<AlignmentRecord>();
+for (int i = 0; i < 200; i++)
+{
+    string seq = string.Concat(Enumerable.Range(0, 50).Select(_ => "ACGT"[rng.Next(4)]));
+    records.Add(AlignmentRecord.Parse(
+        $"read{i}\t0\tchr1\t{1 + rng.Next(9_900)}\t60\t50M\t*\t0\t0\t{seq}\t{new string('I', 50)}\tNM:i:0", header));
+}
+
+// Coordinate-sort, write BGZF-compressed BAM and build the .bai on the fly
+using (var writer = BamWriter.Create("demo.bam", header, new BamWriterOptions { Index = BinningIndexFormat.Bai }))
+    writer.Write(CoordinateComparer.Sort(records));
+
+using var bam = BamReader.Open("demo.bam");                  // loads demo.bam.bai
+foreach (var r in bam.Query("chr1:1001-1100"))               // samtools-style region, 1-based
+    Console.WriteLine($"{r.Name} {r.ReferenceName}:{r.Position + 1} {Cigar.Format(r.Cigar)} NM={r.GetInt("NM")}");
+
+int[] depth = AlignmentDepth.Compute(bam, "chr1", 1000, 1100); // 0-based half-open, like samtools depth -a
+Console.WriteLine($"mean depth {depth.Average():F1}");
+```
+
+CRAM needs the reference FASTA (with or without a `.fai`; one is built in memory if missing). Sequences, MD/NM tags, mate fields and template lengths are reconstructed as `samtools view` does:
+
+```csharp
+using Biotech.Net.Genomics.Cram;
+
+using var cram = CramReader.Open("sample.cram", "reference.fa"); // also loads sample.cram.crai
+Console.WriteLine($"CRAM {cram.MajorVersion}.{cram.MinorVersion}, {cram.Header.References.Count} references");
+foreach (var r in cram.Query("chr1:500-1500").Take(3))
+    Console.WriteLine($"{r.Name} {r.Flags} {r.ReferenceName}:{r.Position + 1} MAPQ {r.MapQ} MD={r.GetString("MD")}");
+```
+
+`AlignmentFile.Open(path, referencePath)` picks SAM, BAM or CRAM from the file content.
+
+Tabix indexes any position-sorted, BGZF-compressed text file:
+
+```csharp
+using Biotech.Net.Genomics.IO;
+using Biotech.Net.Genomics.Vcf;
+
+// bgzip-compress a VCF (a ".gz" path is written as BGZF) and index it
+using (var reader = VcfReader.Open("calls.vcf"))
+using (var writer = VcfWriter.Create("calls.vcf.gz", reader.Header))
+    foreach (var rec in reader.Records()) writer.Write(rec);
+TabixIndex.Build("calls.vcf.gz", TabixConfig.VcfPreset).Save("calls.vcf.gz.tbi");
+
+using var vcf = VcfReader.Open("calls.vcf.gz");               // finds calls.vcf.gz.tbi
+Console.WriteLine($"indexed: {vcf.IsIndexed}");
+foreach (var rec in vcf.Query("chr1:5000-5100"))
+    Console.WriteLine(rec.Variant);
+
+// any bgzipped, tabix-indexed text file (BED, GFF, ...)
+using var bed = TabixReader.Open("features.bed.gz");
+foreach (string line in bed.Query("chr2:1-200"))
+    Console.WriteLine(line);
+```
+
+Indexes written here (`.bai`, `.csi`, `.tbi`) contain the same bins and chunks as those from `samtools index` and `tabix`, and samtools reads the BAM files `BamWriter` produces.
+
 ## Limitations
 
-- BAM/CRAM, BGZF and tabix are not implemented yet (see the [roadmap](../roadmap.md)). Convert files to SAM or VCF first.
+- CRAM is read-only (no CRAM writer), and CRAM blocks compressed with LZMA raise `NotSupportedException`; re-encode such files with samtools (without `use_lzma`). BAM, BGZF, BAI/CSI and tabix are both read and written.
+- `IndexedFastaReader` (and so the CRAM reference) needs an uncompressed FASTA; bgzipped FASTA with `.gzi` is not supported.
 - `ReadMapper` is for short reads against small and mid-size references held in memory, for example bacterial genomes and amplicons. It is not a BWA or minimap2 replacement for whole human genomes.
 - `SnvCaller` is a diploid SNV caller only; it does not call indels or do local reassembly.
 - The de Bruijn assembler suits error-light short reads on small genomes. It does no scaffolding and does not use paired-end information.

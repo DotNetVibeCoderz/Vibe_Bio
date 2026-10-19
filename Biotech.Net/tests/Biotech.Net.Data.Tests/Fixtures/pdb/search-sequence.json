@@ -1,0 +1,21 @@
+{
+  "query_id" : "0f229048-d287-414a-b281-52731139f7fe",
+  "result_type" : "polymer_entity",
+  "total_count" : 27,
+  "result_set" : [ {
+    "identifier" : "1CCM_1",
+    "score" : 1.0
+  }, {
+    "identifier" : "1CCN_1",
+    "score" : 1.0
+  }, {
+    "identifier" : "1CNR_1",
+    "score" : 1.0
+  }, {
+    "identifier" : "1EJG_1",
+    "score" : 1.0
+  }, {
+    "identifier" : "1YV8_1",
+    "score" : 1.0
+  } ]
+}

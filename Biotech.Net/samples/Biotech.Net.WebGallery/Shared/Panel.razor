@@ -1,0 +1,20 @@
+<section class="panel @Class">
+    @if (Title is not null || Aside is not null)
+    {
+        <header>
+            <h2>@Title</h2>
+            @if (Aside is not null)
+            {
+                <span class="aside">@Aside</span>
+            }
+        </header>
+    }
+    @ChildContent
+</section>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Aside { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

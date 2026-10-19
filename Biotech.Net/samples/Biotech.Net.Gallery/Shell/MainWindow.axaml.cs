@@ -107,7 +107,7 @@ public partial class MainWindow : Window, IShellServices
         using var rtb = new RenderTargetBitmap(new PixelSize((int)(size.Width * scale), (int)(size.Height * scale)), new Vector(96 * scale, 96 * scale));
         rtb.Render(control);
         using var ms = new MemoryStream();
-        rtb.Save(ms);
+        rtb.Save(ms, PngBitmapEncoderOptions.Default);
         return ms.ToArray();
     }
 }

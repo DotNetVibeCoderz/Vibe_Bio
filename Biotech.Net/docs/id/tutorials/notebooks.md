@@ -99,4 +99,4 @@ Bukalah di VS Code dengan ekstensi Polyglot Notebooks, atau jalankan dari Jupyte
 - Sekuens yang sangat panjang dipotong di kartu sesuai `BiotechHtml.MaxResidues`, dan penjajaran sesuai `AlignmentHtml.MaxColumns`.
 
 ---
-Sebelumnya: [Visualisasi](visualization.md) · [Indeks tutorial](index.md)
+Sebelumnya: [Visualisasi](visualization.md) · Selanjutnya: [Data cloud](data.md) · [Indeks tutorial](index.md)

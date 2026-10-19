@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biotech.Net Web Gallery</title>
+    <meta name="description" content="Biotech.Net running in your browser: DNA, genomes, proteins, molecules, CRISPR guides, RNA-seq and a C# playground. Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil." />
+    <meta name="theme-color" content="#0B1015" />
+    <base href="/" />
+    <link rel="icon" type="image/png" href="img/icon-64.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="Biotech.Net.WebGallery.styles.css" />
+</head>
+<body>
+    <div id="app">
+        <div class="boot">
+            <img src="img/icon-64.png" width="40" height="40" alt="" />
+            <div class="boot-name">BIOTECH.NET</div>
+            <div class="boot-stripe"><i class="a"></i><i class="c"></i><i class="g"></i><i class="t"></i></div>
+            <div class="boot-line">Loading the .NET runtime and the Biotech.Net libraries into your browser…</div>
+            <div class="boot-progress"><span></span></div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui" role="alert">
+        The page hit an unexpected error. <a href="" class="reload">Reload</a>
+        <button class="dismiss" type="button" aria-label="Dismiss">×</button>
+    </div>
+
+    <script src="js/gallery.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+{"header":{"type":"elink","version":"0.3"},"linksets":[{"dbfrom":"protein","ids":["4504349"],"linksetdbs":[{"dbto":"gene","linkname":"protein_gene","links":["3043"]}]}]}

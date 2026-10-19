@@ -75,9 +75,51 @@ Point3[] xy = Depiction.Compute2DCoordinates(ibuprofen);
 
 ![Gambar molekul](../../images/molecule.png)
 
+## 4. Konformer 3-D dan medan gaya UFF
+
+`ConformerGenerator` menanamkan molekul dalam 3-D dengan alur geometri jarak bergaya ETKDG (pengaturan ETKDGv3 RDKit: matriks batas, penanaman 4-D, pemeriksaan kiralitas, preferensi torsi eksperimental, suku planaritas), lalu merapikan setiap konformer dengan UFF dan membuang duplikat yang hampir sama berdasarkan RMSD yang memperhitungkan simetri. Hidrogen ditambahkan otomatis dan hasilnya dapat direproduksi untuk seed yang sama.
+
+```csharp
+using Biotech.Net.Chemistry;
+
+var ibuprofen = Molecule.FromSmiles("CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O", "ibuprofen");
+ConformerEnsemble ensemble = ConformerGenerator.Generate(ibuprofen, 10, new ConformerOptions { RandomSeed = 42 });
+Console.WriteLine($"{ensemble.Count} dari {ensemble.Attempted} konformer tersisa setelah pemangkasan RMSD");
+for (int i = 0; i < ensemble.Count; i++)
+    Console.WriteLine($"konformer {i}: energi UFF {ensemble.Energies[i]:F2} kkal/mol");
+SdfWriter.WriteFile("ibuprofen_conformers.sdf", ensemble.ToMolecules());   // SDF 3-D dengan H eksplisit
+double rmsd = ConformerAlignment.BestRmsd(ensemble.Molecule, ensemble.Conformers[0], ensemble.Conformers[1]);
+Console.WriteLine($"RMSD atom berat antara konformer 0 dan 1: {rmsd:F2} Å");
+
+// Satu konformer, lalu Universal Force Field secara langsung
+Molecule phenol = ConformerGenerator.Embed(Molecule.FromSmiles("Oc1ccccc1", "phenol"));
+var uff = UffForceField.Create(phenol);                  // perlu hidrogen eksplisit (Embed menambahkannya)
+Console.WriteLine(string.Join(" ", uff.AtomTypes));      // O_R C_R C_R C_R C_R C_R C_R H_ ...
+Console.WriteLine(uff.EnergyTerms(phenol.Coordinates!)); // ikatan, sudut, torsi, inversi, vdW
+MinimizationResult min = UffForceField.Optimize(phenol); // L-BFGS, di tempat
+Console.WriteLine($"minimum UFF {min.Energy:F3} kkal/mol setelah {min.Iterations} iterasi");
+```
+
+Akurasi terhadap RDKit 2026.09.1 (30 molekul, lihat `tests/Biotech.Net.Chemistry.Tests/Data/conformer_reference_gen.py`):
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Tipe atom UFF, hibridisasi, konjugasi | identik pada ke-30 molekul |
+| Energi UFF pada geometri RDKit | selisih di bawah 1×10⁻⁴ kkal/mol |
+| Gradien UFF | selisih di bawah 2×10⁻³ kkal/mol/Å |
+| Minimum UFF RDKit | juga minimum medan gaya kami (minimisasi ulang mengubah E < 0,01 kkal/mol) |
+| Panjang ikatan vs konformer ETKDGv3 RDKit | deviasi rata-rata 0,015 Å (maks 0,10 Å) |
+| Sudut ikatan vs konformer ETKDGv3 RDKit | deviasi rata-rata 2,4° (maks 25°) |
+| Stereo tetrahedral dan E/Z | selalu dipertahankan |
+| Cakupan ansambel RDKit (rata-rata RMSD terbaik) | dalam 0,13 Å dari cakupan RDKit sendiri antar-seed (0,07 Å tanpa perapian UFF) |
+
+Membangkitkan sepuluh konformer molekul seukuran obat butuh sekitar 0,1–0,9 detik pada satu inti; secara bawaan konformer dikerjakan paralel.
+
 ## Batasan
 
-- Koordinat hanya 2-D. Pembangkitan konformer 3-D (gaya ETKDG) masih di [roadmap](../roadmap.md).
+- Pembangkitan konformer mengikuti algoritme ETKDG RDKit tetapi tidak identik bit demi bit: batas jarak 1-5, batas 1-4 khusus makrosiklus, stereo atropisomer dan non-tetrahedral, penanaman terkekang (peta koordinat), serta peminimal "all-in-one" RDKit yang lebih baru belum diimplementasikan, dan kecocokan pola torsi yang simetris bisa memilih atom berbeda. Perapian UFF (aktif secara bawaan, `ForceFieldCleanup`) sedikit menggeser konformer dari torsi mirip kristal hasil ETKDG; matikan agar paling dekat dengan keluaran RDKit.
+- Garam dan molekul multi-fragmen ditanamkan per fragmen lalu dijajarkan berjarak 4 Å (RDKit menumpuknya).
+- Medan gayanya UFF, bukan MMFF94; tanpa elektrostatik (bawaan UFF di RDKit). Pusat trigonal-bipiramidal dan sebagian besar keadaan muatan logam belum diparameterisasi.
 - Stereokimia diurai dan ditulis dalam SMILES, tetapi peringkat kanoniknya tidak dijamin sama persis dengan string SMILES kanonik RDKit. Bandingkan molekul lewat sidik jari atau lewat SMILES kanonik yang dihasilkan Biotech.Net sendiri.
 - Model aromatisitas mirip RDKit. Sistem heteroaromatik yang tidak lazim bisa dipersepsi berbeda dari RDKit atau Open Babel, sehingga sidik jari dan kecocokan SMARTS ikut berubah.
 

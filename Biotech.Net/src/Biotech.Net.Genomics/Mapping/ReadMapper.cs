@@ -110,6 +110,9 @@ public sealed class ReadAlignment
         };
     }
 
+    /// <summary>The alignment as an <see cref="AlignmentRecord"/> (reference ids resolved through <paramref name="header"/> when given).</summary>
+    public AlignmentRecord ToAlignmentRecord(SamHeader? header = null) => AlignmentRecord.FromSamRecord(ToSam(), header);
+
     public override string ToString() => IsMapped
         ? $"{ReadId} → {ReferenceName}:{Position + 1} {(IsReverse ? '-' : '+')} {Mapping.Cigar.Format(Cigar)} MAPQ {MapQ}"
         : $"{ReadId} unmapped";

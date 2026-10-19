@@ -1,0 +1,21 @@
+{
+  "query_id" : "6f37747b-0794-4ece-a345-9519dfd81342",
+  "result_type" : "entry",
+  "total_count" : 45,
+  "result_set" : [ {
+    "identifier" : "3SZS",
+    "score" : 1.0
+  }, {
+    "identifier" : "2FD7",
+    "score" : 0.9945717820113648
+  }, {
+    "identifier" : "1EJG",
+    "score" : 0.9938795680745358
+  }, {
+    "identifier" : "2FD9",
+    "score" : 0.9913665919098692
+  }, {
+    "identifier" : "1CCM",
+    "score" : 0.988730959334367
+  } ]
+}

@@ -1,0 +1,10 @@
+@* Read-only C# listing with line numbers and light syntax colouring (keywords, strings, comments, numbers). *@
+<pre class="code-view"><code>@for (int i = 0; i < lines.Length; i++)
+{<span class="ln">@(i + 1)</span>@((MarkupString)CSharpHighlighter.Line(lines[i]))@("\n")}</code></pre>
+
+@code {
+    [Parameter] public string Code { get; set; } = "";
+    private string[] lines = [];
+
+    protected override void OnParametersSet() => lines = Code.Replace("\r", "").TrimEnd().Split('\n');
+}

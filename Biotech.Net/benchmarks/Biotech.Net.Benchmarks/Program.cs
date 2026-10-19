@@ -16,6 +16,14 @@ using Biotech.Net.Native;
 //
 // Kernel benchmarks call the Rust bridge and the managed fallback directly (both are internal and
 // visible to this assembly), so one process measures both back-ends side by side.
+//
+//   dotnet run -c Release -p:SkipRustBuild=true -- --atlas [cells] [genes] [umis] [dir]   out-of-core single-cell run (AtlasScaleBenchmark.cs)
+
+if (args.Length > 0 && args[0] == "--atlas")
+{
+    AtlasScaleBenchmark.Run(args[1..]);
+    return;
+}
 
 bool full = args.Contains("--full");
 args = args.Where(a => a != "--full").ToArray();

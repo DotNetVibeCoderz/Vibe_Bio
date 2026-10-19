@@ -26,6 +26,12 @@
     <ProjectReference Include="../../src/Biotech.Net.Genomics/Biotech.Net.Genomics.csproj" />
     <ProjectReference Include="../../src/Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
     <ProjectReference Include="../../src/Biotech.Net.Transcriptomics/Biotech.Net.Transcriptomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Gpu/Biotech.Net.Gpu.csproj" />
+  </ItemGroup>
+
+  <!-- Docking complexes for the GPU benchmarks (shared with the DrugDiscovery tests). -->
+  <ItemGroup>
+    <None Include="../../tests/Biotech.Net.DrugDiscovery.Tests/Data/*_*.*" LinkBase="Data" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

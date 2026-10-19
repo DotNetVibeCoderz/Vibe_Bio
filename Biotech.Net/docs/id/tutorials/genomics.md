@@ -4,7 +4,7 @@ Paket: `Gravicode.Biotech.Net.Genomics`
 
 > Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil
 
-Berkas varian (VCF), prediksi efek varian, pemetaan bacaan dan pemanggilan SNV, perakitan de Bruijn, pencarian gen prokariot, dan genetika populasi.
+Berkas varian (VCF, dengan tabix), berkas penjajaran (SAM, BAM, CRAM), prediksi efek varian, pemetaan bacaan dan pemanggilan SNV, perakitan de Bruijn, pencarian gen prokariot, dan genetika populasi.
 
 Koordinat: `GenomicInterval` berbasis 0 dan setengah terbuka, sedangkan `Variant.Position` berbasis 1 seperti VCF.
 
@@ -29,12 +29,12 @@ Console.WriteLine($"{header.Samples.Count} sampel, {records.Count} rekaman");
 foreach (var r in records.PassOnly())
     Console.WriteLine($"{r.Variant} {r.Variant.Type} AF={r.Variant.AlternateAlleleFrequency():F2} GT(S1)={r.GetGenotype(0)}");
 
-// Menulis kembali (bgzip/tabix belum didukung; path ".gz" ditulis sebagai gzip biasa)
+// Menulis kembali (VcfWriter.Create dengan path ".gz" menulis BGZF yang bisa diindeks tabix; lihat bagian 6)
 var sw = new StringWriter();
 using (var writer = new VcfWriter(sw, header, leaveOpen: true)) writer.Write(records);
 ```
 
-Untuk berkas di disk, `VcfReader.Open(path)` mengalirkan rekaman dan `reader.Query(GenomicInterval)` menyaring berdasarkan wilayah.
+Untuk berkas di disk, `VcfReader.Open(path)` mengalirkan rekaman dan `reader.Query(GenomicInterval)` menyaring berdasarkan wilayah (memakai indeks tabix bila berkasnya `.vcf.gz` dengan `.tbi` atau `.csi`).
 
 ## 2. Prediksi efek varian
 
@@ -87,7 +87,7 @@ var calls = SnvCaller.Call([reference], alignments);
 foreach (var call in calls) Console.WriteLine(call);
 ```
 
-`SamWriter` menulis penjajaran sebagai SAM, dan `SamReader` membaca SAM dari perkakas lain.
+`SamWriter` menulis penjajaran sebagai SAM, dan `SamReader` membaca SAM dari perkakas lain. Untuk menyimpannya sebagai BAM berindeks, ubah dengan `ToAlignmentRecord(header)`, urutkan dengan `CoordinateComparer.Sort`, lalu tulis dengan `BamWriter` (bagian 6); `Pileup.AddRange` juga menerima rekaman yang dibaca kembali dari BAM atau CRAM.
 
 ## 4. Perakitan dan pencarian gen
 
@@ -133,9 +133,78 @@ Genome browser di `Biotech.Net.Visualization` menggambar gen, cakupan, dan varia
 
 ![Genome browser](../../images/genome-browser.png)
 
+## 6. BAM, CRAM, dan tabix
+
+Rekaman BAM dan CRAM dibaca menjadi `AlignmentRecord` (`Position` berbasis 0, kolom opsional bertipe). String wilayah mengikuti samtools (`chr1:1001-1100`, berbasis 1 dan inklusif); overload `Query(name, start, end)` memakai koordinat berbasis 0 setengah terbuka.
+
+```csharp
+using Biotech.Net.Genomics.IO;
+using Biotech.Net.Genomics.Mapping;
+
+var header = SamHeader.Create([("chr1", 10_000L)], sortOrder: "coordinate");
+var rng = new Random(1);
+var records = new List<AlignmentRecord>();
+for (int i = 0; i < 200; i++)
+{
+    string seq = string.Concat(Enumerable.Range(0, 50).Select(_ => "ACGT"[rng.Next(4)]));
+    records.Add(AlignmentRecord.Parse(
+        $"read{i}\t0\tchr1\t{1 + rng.Next(9_900)}\t60\t50M\t*\t0\t0\t{seq}\t{new string('I', 50)}\tNM:i:0", header));
+}
+
+// Urutkan menurut koordinat, tulis BAM terkompresi BGZF, dan bangun .bai sekaligus
+using (var writer = BamWriter.Create("demo.bam", header, new BamWriterOptions { Index = BinningIndexFormat.Bai }))
+    writer.Write(CoordinateComparer.Sort(records));
+
+using var bam = BamReader.Open("demo.bam");                  // memuat demo.bam.bai
+foreach (var r in bam.Query("chr1:1001-1100"))               // wilayah gaya samtools, berbasis 1
+    Console.WriteLine($"{r.Name} {r.ReferenceName}:{r.Position + 1} {Cigar.Format(r.Cigar)} NM={r.GetInt("NM")}");
+
+int[] depth = AlignmentDepth.Compute(bam, "chr1", 1000, 1100); // berbasis 0 setengah terbuka, seperti samtools depth -a
+Console.WriteLine($"mean depth {depth.Average():F1}");
+```
+
+CRAM memerlukan FASTA referensi (dengan atau tanpa `.fai`; bila belum ada, indeksnya dibangun di memori). Sekuens, tag MD/NM, kolom pasangan, dan panjang templat direkonstruksi sama seperti `samtools view`:
+
+```csharp
+using Biotech.Net.Genomics.Cram;
+
+using var cram = CramReader.Open("sample.cram", "reference.fa"); // sekaligus memuat sample.cram.crai
+Console.WriteLine($"CRAM {cram.MajorVersion}.{cram.MinorVersion}, {cram.Header.References.Count} references");
+foreach (var r in cram.Query("chr1:500-1500").Take(3))
+    Console.WriteLine($"{r.Name} {r.Flags} {r.ReferenceName}:{r.Position + 1} MAPQ {r.MapQ} MD={r.GetString("MD")}");
+```
+
+`AlignmentFile.Open(path, referencePath)` memilih SAM, BAM, atau CRAM berdasarkan isi berkas.
+
+Tabix mengindeks berkas teks apa pun yang terurut posisi dan terkompresi BGZF:
+
+```csharp
+using Biotech.Net.Genomics.IO;
+using Biotech.Net.Genomics.Vcf;
+
+// kompres VCF dengan bgzip (path ".gz" ditulis sebagai BGZF) lalu indeks
+using (var reader = VcfReader.Open("calls.vcf"))
+using (var writer = VcfWriter.Create("calls.vcf.gz", reader.Header))
+    foreach (var rec in reader.Records()) writer.Write(rec);
+TabixIndex.Build("calls.vcf.gz", TabixConfig.VcfPreset).Save("calls.vcf.gz.tbi");
+
+using var vcf = VcfReader.Open("calls.vcf.gz");               // menemukan calls.vcf.gz.tbi
+Console.WriteLine($"indexed: {vcf.IsIndexed}");
+foreach (var rec in vcf.Query("chr1:5000-5100"))
+    Console.WriteLine(rec.Variant);
+
+// berkas teks apa pun yang ber-bgzip dan berindeks tabix (BED, GFF, ...)
+using var bed = TabixReader.Open("features.bed.gz");
+foreach (string line in bed.Query("chr2:1-200"))
+    Console.WriteLine(line);
+```
+
+Indeks yang ditulis di sini (`.bai`, `.csi`, `.tbi`) berisi bin dan chunk yang sama dengan keluaran `samtools index` dan `tabix`, dan samtools dapat membaca berkas BAM hasil `BamWriter`.
+
 ## Batasan
 
-- BAM/CRAM, BGZF, dan tabix belum diimplementasikan (lihat [roadmap](../roadmap.md)). Konversikan dulu ke SAM atau VCF.
+- CRAM hanya bisa dibaca (belum ada penulis CRAM), dan blok CRAM yang dikompresi LZMA memunculkan `NotSupportedException`; enkode ulang berkas seperti itu dengan samtools (tanpa `use_lzma`). BAM, BGZF, BAI/CSI, dan tabix bisa dibaca maupun ditulis.
+- `IndexedFastaReader` (dan karena itu referensi CRAM) memerlukan FASTA tanpa kompresi; FASTA ber-bgzip dengan `.gzi` belum didukung.
 - `ReadMapper` ditujukan untuk bacaan pendek terhadap referensi kecil–menengah yang muat di memori, misalnya genom bakteri dan amplikon. Bukan pengganti BWA atau minimap2 untuk genom manusia utuh.
 - `SnvCaller` hanya memanggil SNV diploid; tidak memanggil indel dan tidak melakukan perakitan ulang lokal.
 - Perakit de Bruijn cocok untuk bacaan pendek bergalat rendah pada genom kecil. Tidak ada scaffolding dan tidak memanfaatkan informasi paired-end.

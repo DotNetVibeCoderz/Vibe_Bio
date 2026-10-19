@@ -154,11 +154,11 @@ public sealed record VinaScoreTerms(double Total, double Gauss1, double Gauss2, 
 /// torsional correction.
 /// </summary>
 /// <remarks>
-/// This scores a <b>given</b> pose; it does not search conformations or perform flexible docking.
-/// <see cref="Optimize"/> does a small rigid-body local search (translation and rotation only) and
-/// <see cref="ScoreInPocket"/> seeds that search at a detected pocket centre. Atom typing is simplified compared
-/// to Vina's X-score types, so absolute values are indicative rather than reproducing Vina exactly; relative
-/// rankings of poses of the same ligand are the intended use.
+/// This is a quick, element-based scorer for a <b>given</b> pose. <see cref="Optimize"/> does a small rigid-body local
+/// search (translation and rotation only) and <see cref="ScoreInPocket"/> seeds that search at a detected pocket centre.
+/// Atom typing is simplified compared to Vina's X-score types, so absolute values are indicative. For Vina-faithful
+/// scores (X-Score typing, intramolecular terms, gradients) and flexible docking use <see cref="VinaDocking"/> with a
+/// <see cref="VinaReceptor"/>.
 /// </remarks>
 public static class VinaScore
 {

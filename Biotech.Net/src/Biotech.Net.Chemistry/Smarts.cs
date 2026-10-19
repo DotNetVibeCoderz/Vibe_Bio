@@ -5,7 +5,7 @@ namespace Biotech.Net.Chemistry;
 /// <summary>
 /// A compiled SMARTS query. Supported: atom primitives <c>*</c> <c>a</c> <c>A</c>, element symbols (aliphatic
 /// upper case, aromatic lower case), <c>#n</c>, isotope, <c>D</c> <c>X</c> <c>H</c> <c>h</c> <c>v</c>
-/// <c>R</c> <c>r</c> <c>x</c> with optional counts, charges (<c>+</c>, <c>-2</c>, <c>++</c>), recursive
+/// <c>R</c> <c>r</c> <c>x</c> with optional counts, RDKit's hybridisation primitive <c>^n</c> (<c>^1</c> sp … <c>^3</c> sp³) and ring-size ranges <c>r{a-b}</c>, charges (<c>+</c>, <c>-2</c>, <c>++</c>), recursive
 /// <c>$(...)</c>, logical <c>!</c> <c>&amp;</c> <c>,</c> <c>;</c> (with SMARTS precedence); bond primitives
 /// <c>- = # : ~ @</c> (plus <c>/</c> <c>\</c> as single) with the same logic; ring closures, branches and
 /// <c>.</c>. Chirality and atom-map labels are accepted and ignored.
@@ -87,6 +87,8 @@ public sealed class SmartsPattern
         public readonly Molecule Mol = mol;
         public readonly RingInfo Rings = mol.Rings;
         public Dictionary<(SmartsPattern, int), bool>? Recursive;
+        private Hybridization[]? _hybridization;
+        public Hybridization[] Hybridizations => _hybridization ??= AtomHybridization.Compute(Mol);
     }
 
     internal List<int[]> FindMatches(Molecule mol, bool unique, int max, MatchContext ctx, int fixedRoot)
@@ -257,10 +259,11 @@ public sealed class SmartsPattern
 
     internal sealed class AtomExpr
     {
-        internal enum K { True, AtomicNum, Aromatic, Aliphatic, Degree, TotalH, MinTotalH, ImplicitH, MinImplicitH, Connectivity, Valence, RingCount, InRing, RingSize, RingConn, MinRingConn, Charge, Isotope, Recursive, Not, And, Or }
+        internal enum K { True, AtomicNum, Aromatic, Aliphatic, Degree, TotalH, MinTotalH, ImplicitH, MinImplicitH, Connectivity, Valence, RingCount, InRing, RingSize, RingConn, MinRingConn, Charge, Isotope, Hybridization, RingSizeRange, Recursive, Not, And, Or }
 
         public readonly K Kind;
         public readonly int Value;
+        public int Value2;
         public AtomExpr? L, R;
         public SmartsPattern? Rec;
 
@@ -295,6 +298,12 @@ public sealed class SmartsPattern
                 case K.MinRingConn: return ctx.Rings.RingBondCount(atom) >= Value;
                 case K.Charge: return mol.Atoms[atom].FormalCharge == Value;
                 case K.Isotope: return mol.Atoms[atom].Isotope == Value;
+                case K.Hybridization: return (int)ctx.Hybridizations[atom] == Value;
+                case K.RingSizeRange:
+                    {
+                        int r = ctx.Rings.SmallestRingSize(atom);
+                        return r > 0 && r >= Value && r <= Value2;
+                    }
                 case K.Recursive:
                     {
                         ctx.Recursive ??= [];
@@ -546,11 +555,19 @@ public sealed class SmartsPattern
                     if (Peek() == '@') _pos++;
                     if (Peek() == '?') _pos++;
                     return new AtomExpr(AtomExpr.K.True);
+                case '^':
+                    {
+                        // RDKit extension: ^0 = s, ^1 = sp, ^2 = sp2, ^3 = sp3, ^4 = sp3d, ^5 = sp3d2.
+                        _pos++;
+                        int v = ReadInt(-1);
+                        if (v is < 0 or > 5) throw Fail("'^' needs a hybridisation number 0-5");
+                        return new AtomExpr(AtomExpr.K.Hybridization, v + 1);
+                    }
             }
             if (char.IsAsciiLetterUpper(c))
             {
                 // Hydrogen atom: "[H]", "[H+]", "[2H]".
-                if (c == 'H' && atStart && Peek(1) is ']' or '+' or '-' or ';' or ',' or '&')
+                if (c == 'H' && atStart && Peek(1) is ']' or '+' or '-' or ';' or ',' or '&' or ':')
                 {
                     _pos++;
                     return new AtomExpr(AtomExpr.K.AtomicNum, 1);
@@ -601,6 +618,18 @@ public sealed class SmartsPattern
                     case 'r':
                         {
                             _pos++;
+                            if (Peek() == '{')
+                            {
+                                // RDKit range extension: r{a-b}, r{a-}, r{-b} on the smallest ring size
+                                _pos++;
+                                int lo = ReadInt(0);
+                                if (Peek() != '-') throw Fail("expected '-' in r{a-b}");
+                                _pos++;
+                                int hi = ReadInt(int.MaxValue);
+                                if (Peek() != '}') throw Fail("expected '}' in r{a-b}");
+                                _pos++;
+                                return new AtomExpr(AtomExpr.K.RingSizeRange, lo) { Value2 = hi };
+                            }
                             int v = ReadInt(-1);
                             if (v < 0) return new AtomExpr(AtomExpr.K.InRing);
                             return v == 0 ? AtomExpr.Not(new AtomExpr(AtomExpr.K.InRing)) : new AtomExpr(AtomExpr.K.RingSize, v);

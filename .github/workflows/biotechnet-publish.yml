@@ -77,8 +77,8 @@ jobs:
           if [ -z "$NUGET_API_KEY" ]; then echo "::error::the NUGET_API_KEY secret is not set"; exit 1; fi
           v="${{ needs.version.outputs.version }}"
           # Dependency order, so a consumer never sees a package whose dependency is still missing.
-          for id in Native Core Sequences Alignments Genomics Transcriptomics Proteomics StructuralBiology \
-                    Chemistry DrugDiscovery SyntheticBiology AI Visualization Notebooks; do
+          for id in Native Core Workflows Sequences Alignments Genomics Transcriptomics Proteomics StructuralBiology \
+                    Chemistry DrugDiscovery SyntheticBiology Data Gpu AI Visualization Notebooks; do
             # One explicit .nupkg: `dotnet nuget push` sends the matching .snupkg itself.
             dotnet nuget push "packages/Gravicode.Biotech.Net.$id.$v.nupkg" \
               --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

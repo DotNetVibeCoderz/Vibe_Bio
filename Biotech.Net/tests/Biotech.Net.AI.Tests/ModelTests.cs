@@ -3,6 +3,7 @@ using System.Text.Json;
 using Biotech.Net.AI.Hub;
 using Biotech.Net.AI.Inference;
 using Biotech.Net.AI.Models;
+using HfTokenizer = Gravicode.HFNet.GraviTokenizers.HfTokenizer;
 
 namespace Biotech.Net.AI.Tests;
 
@@ -64,26 +65,40 @@ public class EsmTokenizerTests
         "M", "H", "W", "C", "X", "B", "U", "Z", "O", ".", "-", "<null_1>", "<mask>",
     ];
 
+    // The ESM tokenizer is HF.Net's (HfTokenizer.FromEsmVocabulary); these pin the behaviour Biotech.Net relies on.
+    internal static HfTokenizer FromVocabulary(IEnumerable<string> vocab, bool appendEos = true)
+    {
+        string path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(path, vocab);
+            return HfTokenizer.FromEsmVocabulary(path, appendEos);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public void Encode_AddsClsEosAndRecognisesMask()
     {
-        var tok = new EsmTokenizer(Vocab);
-        Assert.Equal([0, 20, 15, 32, 5, 2], tok.Encode("MK<mask>A"));
-        Assert.Equal([20, 3], tok.Encode("M#", addSpecialTokens: false));
-        Assert.Equal("MKA", tok.Decode(tok.Encode("MKA")));
-        Assert.True(tok.IsSpecial(tok.MaskId));
+        var tok = FromVocabulary(Vocab);
+        Assert.Equal([0, 20, 15, 32, 5, 2], tok.Encode("MK<mask>A").ToIdArray());
+        Assert.Equal([20, 3], tok.Encode("M#", addSpecialTokens: false).ToIdArray());
+        Assert.Equal("MKA", tok.Decode(tok.Encode("MKA").ToIdArray()).Replace(" ", ""));
+        Assert.Equal(32, tok.MaskId);
     }
 
     [Fact]
     public void Encode_GreedyKmersLikeNucleotideTransformer()
     {
-        var tok = new EsmTokenizer(["<unk>", "<pad>", "<mask>", "<cls>", "AAAAAA", "CCCCCC", "A", "C", "G", "T", "N"], appendEos: false);
-        Assert.Equal([3, 4, 5, 8, 9], tok.Encode("AAAAAACCCCCCGT"));
-        Assert.Equal(-1, tok.EosId);
+        var tok = FromVocabulary(["<unk>", "<pad>", "<mask>", "<cls>", "AAAAAA", "CCCCCC", "A", "C", "G", "T", "N"], appendEos: false);
+        Assert.Equal([3, 4, 5, 8, 9], tok.Encode("AAAAAACCCCCCGT").ToIdArray());
     }
 }
 
-public class EsmModelTests
+public class EsmEncoderTests
 {
     // A tiny random ESM checkpoint (hidden 8, 2 heads, 1 layer) written as safetensors, to exercise the forward pass offline.
     private static string WriteTinyCheckpoint(bool rotary = true)
@@ -149,21 +164,24 @@ public class EsmModelTests
         string dir = WriteTinyCheckpoint(rotary);
         try
         {
-            using var model = EsmModel.Open(dir);
-            Assert.True(model.HasLanguageModelHead);
-            var ids = model.Tokenizer.Encode("MKTAYIAK");
-            var hidden = model.Forward(ids);
-            Assert.Equal(ids.Length * 8, hidden.Length);
-            Assert.All(hidden, x => Assert.True(float.IsFinite(x)));
-            Assert.Equal(hidden, model.Forward(ids)); // deterministic
+            using var encoder = EsmEncoder.Load(dir);
+            var model = encoder.Model;
+            Assert.True(model.HasMaskedLanguageHead);
+            var states = encoder.Encode("MKTAYIAK");
+            Assert.Equal(10, states.Tokens);
+            Assert.Equal(states.Tokens * 8, states.Hidden.Length);
+            Assert.True(states.IsSpecial[0] && states.IsSpecial[^1] && !states.IsSpecial[1]);
+            Assert.All(states.Hidden, x => Assert.True(float.IsFinite(x)));
+            Assert.Equal(states.Hidden, encoder.Encode("MKTAYIAK").Hidden); // deterministic
 
-            var logp = EsmModel.LogSoftmax(model.LogitsAt(hidden, 3));
+            var ids = model.Tokenizer.Encode("MKTAYIAK").ToIdArray();
+            var logp = Esm.LogSoftmax(model.MaskedLanguageLogits(ids, 3));
             Assert.Equal(33, logp.Length);
             Assert.Equal(1.0, logp.Sum(Math.Exp), 6);
 
             var masked = (int[])ids.Clone();
             masked[3] = model.Tokenizer.MaskId;
-            Assert.NotEqual(hidden, model.Forward(masked));
+            Assert.NotEqual(model.Hidden(ids).ToArray(), model.Hidden(masked).ToArray());
         }
         finally
         {
@@ -177,8 +195,8 @@ public class EsmModelTests
         string dir = WriteTinyCheckpoint();
         try
         {
-            using var model = EsmModel.Open(dir);
-            var scorer = new EsmVariantScorer(model);
+            var scorer = EsmVariantScorer.Load(dir);
+            using var model = scorer.Model;
             const string wt = "MKTAYIAKQR";
             Assert.Equal(0, scorer.Score(wt, "K2K").Score, 12);
             var multi = scorer.Score(wt, "K2A:T3G");
@@ -203,19 +221,18 @@ public class EsmModelTests
     }
 
     [Fact]
-    public void Config_RefusesNucleotideTransformerV2Block()
+    public void Load_RefusesNucleotideTransformerV2Block()
     {
-        string path = Path.GetTempFileName();
+        string dir = WriteTinyCheckpoint();
         try
         {
-            File.WriteAllText(path, """{"model_type":"esm","add_bias_fnn":false,"hidden_size":8}""");
-            Assert.Throws<NotSupportedException>(() => EsmConfig.Load(path));
-            File.WriteAllText(path, """{"model_type":"bert"}""");
-            Assert.Throws<NotSupportedException>(() => EsmConfig.Load(path));
+            string config = Path.Combine(dir, "config.json");
+            File.WriteAllText(config, File.ReadAllText(config).Replace("\"model_type\"", "\"add_bias_fnn\":false,\"model_type\""));
+            Assert.Throws<NotSupportedException>(() => EsmEncoder.Load(dir));
         }
         finally
         {
-            File.Delete(path);
+            Directory.Delete(dir, true);
         }
     }
 

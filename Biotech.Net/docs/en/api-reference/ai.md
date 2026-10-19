@@ -26,11 +26,12 @@ Package `Gravicode.Biotech.Net.AI` · namespaces `Biotech.Net.AI.Models`, `.Prep
 |---|---|
 | `BioEmbedder` | `Load(keyOrRepoId)`, `Embed(input)`, `EmbedBatch(inputs, progress, cancellationToken)`, `TokenEmbeddings`, `Pool`, `Dimension`, `Pooling`, `WindowOverlap`, `MaxDegreeOfParallelism`, `CosineSimilarity(a, b)` |
 | `IBioEncoder` | implemented by `HfTransformerEncoder` (BERT-family) and `EsmEncoder`; `Encode(modelInput)` returns `TokenStates(Hidden, Tokens, HiddenSize, IsSpecial)` |
-| `EsmModel` | `Load(repoIdOrDirectory, revision)`, `Open(directory)`, `Forward(ids)`, `Hidden(sequence, out ids)`, `LogitsAt`, `LogSoftmax`, `Config`, `Tokenizer`, `HasLanguageModelHead`, `HiddenSize` |
-| `EsmTokenizer` | `FromDirectory`, `Encode`, `Decode`, `Id`, `Token`, `IsSpecial`, `MaskToken`, special-token ids |
-| `BioMaskedLanguageModel` | `Load(keyOrRepoId)`, `FillMask(input, topK)`, `PredictResidue(protein, position, topK)`, `MaskToken`, `Esm` |
-| `EsmVariantScorer` | `SiteLogProbabilities`, `Score(wildType, mutation)`, `Score(wildType, "A1B:C2D")`, `ScoreMany`, `SaturationScan(wildType, from, to)`; `ProteinMutation`, `VariantEffectScore`, `MutationalScan` |
+| `EsmEncoder` | `Load(repoIdOrDirectory, revision)`, `new EsmEncoder(TransformerModel, ownsModel)`, `Encode`, `Model` (HF.Net `TransformerModel`), `ModelId`, `HiddenSize`, `MaxTokens` |
+| `BioMaskedLanguageModel` | `Load(keyOrRepoId)`, `new BioMaskedLanguageModel(TransformerModel, ownsModel)`, `FillMask(input, topK)`, `PredictResidue(protein, position, topK)`, `MaskToken`, `Model`, `IsEsm` |
+| `EsmVariantScorer` | `Load(keyOrRepoId)`, `new EsmVariantScorer(TransformerModel)`, `Model`, `SiteLogProbabilities`, `Score(wildType, mutation)`, `Score(wildType, "A1B:C2D")`, `ScoreMany`, `SaturationScan(wildType, from, to)`; `ProteinMutation`, `VariantEffectScore`, `MutationalScan` |
 | `GeneformerModel` | `Load(descriptor)`, `Open(directory)`, `Hidden(tokenIds)`, `EmbedCell(tokenIds, specialIds)`, `Dimension` |
+
+ESM models (ESM-1b, ESM-1v, ESM-2, Nucleotide Transformer v1) run on HF.Net's ESM encoder: `TransformerModel` with `Config.Esm`, `Hidden(int[])`, `MaskedLanguageLogits(ids, position)`, `PredictContacts`, and the ESM tokenizer from `HfTokenizer.FromEsmVocabulary`. Geneformer opens through HF.Net without a tokenizer, and the dictionary pickles are read by HF.Net's restricted `PickleReader`.
 
 `BioEmbedder.Load` and `BioMaskedLanguageModel.Load` throw `NotSupportedException` for `BioModelBackend.NotSupported` models (DNABERT-2, Nucleotide Transformer v2), with the reason in the message.
 

@@ -105,6 +105,7 @@ StyleCopReport.xml
 *.iobj
 *.pch
 *.pdb
+!tests/Biotech.Net.Data.Tests/Fixtures/**/*.pdb
 *.ipdb
 *.pgc
 *.pgd
@@ -433,6 +434,8 @@ native/*/target/
 # Protein Data Bank files are data here, not debug symbols.
 !src/**/Data/*.pdb
 !tests/**/[Dd]ata/*.pdb
+# SDF test fixtures are chemistry data, not SQL Server Compact databases.
+!tests/**/[Dd]ata/*.sdf
 !samples/**/*.pdb
 !docs/**/*.pdb
 !notebooks/**/*.pdb

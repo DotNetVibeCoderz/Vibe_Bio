@@ -61,6 +61,15 @@ Yang bisa disimpulkan:
 
 Masukannya teks di memori, jadi angka ini mengukur parsing, bukan disk. Throughput diturunkan dari waktu rerata dan ukuran masukan.
 
+Dekode BAM (`BamBenchmarks`, job ShortRun in-process): BAM di memori berisi 200.000 bacaan berpasangan × 150 bp (kualitas acak, 34,5 MB terkompresi).
+
+| Benchmark | Rerata | Alokasi | Throughput |
+|---|---:|---:|---|
+| Inflate BGZF, seluruh berkas (CRC32 diperiksa) | 230,8 ms | 2,4 MB | ~150 MB/d terkompresi |
+| Dekode BAM menjadi `AlignmentRecord` | 289,1 ms | 111,5 MB | ~690.000 rekaman/d |
+
+Sebagian besar waktu BAM habis untuk dekompresi deflate; dekode rekaman hanya menambah sekitar 0,3 µs per bacaan.
+
 ## Kemoinformatika
 
 | Benchmark | Rerata | Alokasi |
@@ -83,9 +92,49 @@ Sekitar 21 µs per parsing SMILES dan 8,8 µs per sidik jari ECFP4; Tanimoto mas
 
 `DESeq.Run` penuh jauh lebih mahal daripada normalisasi saja karena pencocokan GLM per gen; angka di atas hanya mengisolasi tahap normalisasi.
 
+## Kernel GPU (Biotech.Net.Gpu, ILGPU)
+
+Diukur pada 2026-10-20 di laptop yang sama, yang GPU satu-satunya adalah **Intel UHD Graphics 620** terintegrasi (OpenCL, 24 execution unit, memori berbagi). Tidak ada GPU NVIDIA, jadi tidak ada angka CUDA. `ILGPU-CPU` adalah akselerator CPU milik ILGPU yang menjalankan kernel GPU di thread CPU untuk pengujian; ia memang tidak dimaksudkan cepat. Kelas `AllVsAllBenchmarks`, `DockingPoseBenchmarks`, dan `DockingSearchBenchmarks`; setiap backend adalah parameter `Backend`, dan baris OpenCL/CUDA hanya muncul bila perangkatnya ada.
+
+```bash
+dotnet run -c Release -p:SkipRustBuild=true -- --filter '*AllVsAll*' '*DockingPose*' '*DockingSearch*'
+```
+
+**Skor Smith–Waterman all-vs-all**, 64 query × 128 target sepanjang 100–300 aa, BLOSUM62, gap 11/1 (≈ 330 juta sel DP). Baris CPU menjalankan satu query per inti.
+
+| Backend | Rerata | ≈ GCUPS |
+|---|---:|---:|
+| Rust (AVX2 striped, 8 thread) | 33,7 ms | 9,7 |
+| ILGPU-OpenCL (UHD 620) | 113,0 ms | 2,9 |
+| C# managed (8 thread) | 1.008 ms | 0,33 |
+| Akselerator ILGPU-CPU | 3.362 ms | 0,10 |
+
+**Objektif Vina + gradien untuk 4.096 pose** biotin di streptavidin (1STP, 5 torsi):
+
+| Backend | Rerata |
+|---|---:|
+| ILGPU-OpenCL (UHD 620) | 5,5 ms |
+| Managed, semua inti | 8,3 ms |
+| Managed, satu thread | 22,6 ms |
+| Akselerator ILGPU-CPU | 55,0 ms |
+
+**Satu proses docking utuh**, benzamidin ke tripsin (3PTB), anggaran bawaan, termasuk peta grid dan pascapemrosesan di CPU:
+
+| Backend | Rerata | Afinitas terbaik |
+|---|---:|---:|
+| Pencarian Vina CPU (exhaustiveness 8, semua inti) | 1,55 s | −6,19 kkal/mol |
+| Pencarian GPU, 1.024 rantai × 106 langkah (UHD 620) | 1,55 s | −6,19 kkal/mol |
+
+Bacaan jujurnya:
+
+- **Pada GPU terintegrasi ini kernel Rust memenangkan benchmark penjajaran 3,4×.** Empat inti Kaby Lake dengan AVX2 striped memang lebih cepat daripada 24 execution unit berclock rendah yang diumpan dari DDR4 bersama. Kernel GPU tetap 9× lebih cepat daripada fallback managed. DP bilangan bulat pada GPU diskret semestinya satu sampai dua orde besaran lebih cepat daripada iGPU ini, tetapi itu belum diukur di sini.
+- **Evaluasi pose satu-satunya tempat iGPU menang** (1,5× atas kode managed di semua inti), karena setiap pose adalah kerja float independen tanpa percabangan pada jalur datanya.
+- **Docking impas.** Pencarian GPU memakai jumlah evaluasi energi yang mirip dengan pencarian CPU dan mendarat di pose terbaik yang sama; pada 1STP ia butuh 7,8 s berbanding 9,5 s di CPU untuk tiga seed (afinitas terbaik −7,01 s.d. −7,21 vs −7,11 s.d. −7,31 kkal/mol). Eksekusi GPU pertama dalam satu proses juga membayar kompilasi kernel sekali jalan selama beberapa detik.
+- Tidak ada kernel docking Rust, jadi tabel docking tidak punya baris Rust; Vulkan belum diimplementasikan.
+
 ## Laporan mentah
 
-Markdown BenchmarkDotNet yang belum disunting disimpan di repositori pada `benchmarks/Biotech.Net.Benchmarks/results/2026-10-15-win-x64-i7-8650U/`, satu berkas per kelas benchmark, lengkap dengan header lingkungannya.
+Markdown BenchmarkDotNet yang belum disunting disimpan di repositori pada `benchmarks/Biotech.Net.Benchmarks/results/2026-10-15-win-x64-i7-8650U/`, satu berkas per kelas benchmark, lengkap dengan header lingkungannya. Hasil GPU ada di `results/2026-10-20-win-x64-i7-8650U-uhd620-gpu/`.
 
 ---
 [Indeks dokumentasi](index.md) · [API Native](api-reference/native.md) · English: [benchmarks](../en/benchmarks.md)

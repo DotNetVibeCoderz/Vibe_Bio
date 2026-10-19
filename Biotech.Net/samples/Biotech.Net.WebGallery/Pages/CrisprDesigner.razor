@@ -1,0 +1,217 @@
+@page "/crispr-designer"
+@using System.Text
+@using Biotech.Net.Sequences
+@using Biotech.Net.SyntheticBiology.Crispr
+@inject IJSRuntime JS
+
+<PageFrame Title="CRISPR Designer" Modules="BIOTECH.NET.SYNTHETICBIOLOGY · CRISPR"
+           Lede="Paste a target to find every protospacer for the chosen nuclease, score on-target activity (Rule Set 1) and specificity (CFD and MIT) against a 60 kb background, and rank the guides."
+           Trace="@trace" TraceLabel="@traceLabel" Status="@status" Code="@snippet">
+    <div class="split">
+        <div class="col-input">
+            <Panel Title="Target">
+                <textarea class="seq-input" rows="10" spellcheck="false" aria-label="Target sequence" @bind="input"></textarea>
+                <div class="chips">
+                    <button class="chip" type="button" @onclick="() => Load(GalleryData.EgfpFasta)">EGFP</button>
+                    <button class="chip" type="button" @onclick='() => Load(">random_1kb\n" + GalleryData.Wrap(RandomSequence.Dna(1000, 3).ToString(), 60))'>Random 1 kb</button>
+                </div>
+            </Panel>
+            <Panel Title="Nuclease · PAM">
+                <select style="width:100%" @bind="nucleaseIndex" @bind:after="DesignAsync" aria-label="Nuclease">
+                    @for (int i = 0; i < CasNuclease.All.Count; i++)
+                    {
+                        <option value="@i">@CasNuclease.All[i]</option>
+                    }
+                </select>
+                <label class="check"><input type="checkbox" @bind="offTargets" @bind:after="DesignAsync" /> Profile off-targets (target + 60 kb background)</label>
+                <p class="caption">Composite = 0.50 × on-target·penalties + 0.35 × CFD + 0.15 × MIT specificity, renormalised over the terms available.</p>
+                <button class="primary" type="button" @onclick="DesignAsync" disabled="@busy">@(busy ? "Designing…" : "Design guides")</button>
+            </Panel>
+        </div>
+
+        <div class="col-results">
+            @if (notice is not null)
+            {
+                @notice
+            }
+            else if (designs.Count > 0)
+            {
+                var best = designs[0];
+                <Panel Title="@($"{nuclease.Name} · {nuclease.Pam} · guide {nuclease.GuideLength} nt")" Aside="@($"designed in {elapsed}")">
+                    <div class="readouts">
+                        <Readout Label="Guides ranked" Value="@designs.Count.ToString()" />
+                        <Readout Label="Best score" Value="@Bench.F(best.CompositeScore, "0.000")" Dye="a" />
+                        <Readout Label="Best on-target" Value="@(double.IsNaN(best.OnTargetScore) ? "n/a" : Bench.F(best.OnTargetScore, "0.000"))" Unit="RS1" Dye="g" />
+                        <Readout Label="Best CFD spec." Value="@Bench.F(best.CfdSpecificity, "0.0")" Unit="/100" Dye="c" />
+                        <Readout Label="Target" Value="@Bench.N(targetLength)" Unit="bp" />
+                    </div>
+                </Panel>
+                <Panel Title="Guide positions" Aside="top guide in amber">@((MarkupString)mapSvg)</Panel>
+                <Panel Title="Ranked guides">
+                    <div class="table-scroll">
+                        <table class="data">
+                            <thead><tr><th>#</th><th>Spacer 5′→3′</th><th>PAM</th><th>Str</th><th>Pos</th><th>Cut</th><th>GC</th><th>On-target</th><th>CFD</th><th>MIT</th><th>Off</th><th>Score</th></tr></thead>
+                            <tbody>
+                                @for (int i = 0; i < designs.Count; i++)
+                                {
+                                    var g = designs[i];
+                                    <tr>
+                                        <td class="@(i == 0 ? "g" : "rank")">@(i + 1)</td>
+                                        <td class="@(i == 0 ? "g" : "")">@g.Guide.Spacer</td>
+                                        <td class="c">@g.Guide.Pam</td>
+                                        <td>@(g.Guide.Strand == Strand.Reverse ? "−" : "+")</td>
+                                        <td>@Bench.N(g.Guide.Start + 1)</td>
+                                        <td class="muted">@Bench.N(g.Guide.CutSite)</td>
+                                        <td>@Bench.F(g.Guide.GcContent * 100, "0")%</td>
+                                        <td>@if (!double.IsNaN(g.OnTargetScore)) {<span class="meter"><i style="width:@((g.OnTargetScore * 100).ToString("0", CultureInfo.InvariantCulture))%"></i></span>}@(double.IsNaN(g.OnTargetScore) ? "n/a" : Bench.F(g.OnTargetScore, "0.00"))</td>
+                                        <td class="c">@Bench.F(g.CfdSpecificity, "0")</td>
+                                        <td>@Bench.F(g.MitSpecificity, "0")</td>
+                                        <td class="@(g.OffTargetCount > 0 ? "t" : "")">@(g.OffTargets is null ? "—" : g.OffTargetCount.ToString())</td>
+                                        <td><span class="meter a"><i style="width:@((g.CompositeScore * 100).ToString("0", CultureInfo.InvariantCulture))%"></i></span>@Bench.F(g.CompositeScore, "0.000")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </Panel>
+                <Panel Title="@($"Top guide off-targets · {best.Guide.Spacer}")" Aside="@(best.Guide.U6CloningOligo == best.Guide.Spacer ? "U6-ready" : "U6 oligo: " + best.Guide.U6CloningOligo)">
+                    @if (best.OffTargets is { } prof && prof.OffTargets.Any())
+                    {
+                        <table class="data">
+                            <thead><tr><th>Site</th><th>Mismatches</th><th>Alignment</th><th>CFD</th></tr></thead>
+                            <tbody>
+                                @foreach (var o in prof.OffTargets.Take(6))
+                                {
+                                    <tr>
+                                        <td>@($"{o.SequenceId}:{o.Start + 1:N0}")</td>
+                                        <td class="@(o.MismatchCount <= 2 ? "t" : "")">@o.MismatchCount</td>
+                                        <td class="muted">@o.Alignment(best.Guide.Spacer)</td>
+                                        <td>@Bench.F(o.CfdScore, "0.000")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="caption">@(offTargets ? "No off-target sites within 4 mismatches for the top guide." : "Off-target profiling is off.")</p>
+                    }
+                </Panel>
+            }
+        </div>
+    </div>
+</PageFrame>
+
+@code {
+    private string input = GalleryData.EgfpFasta;
+    private int nucleaseIndex;
+    private bool offTargets = true, busy;
+    private CasNuclease nuclease = CasNuclease.SpCas9;
+    private IReadOnlyList<GuideDesign> designs = [];
+    private int targetLength;
+    private MarkupString? notice;
+    private string mapSvg = "", elapsed = "", status = "", snippet = "";
+    private string? trace, traceLabel;
+    private static Sequence? _background;
+
+    protected override void OnInitialized() => Design();
+
+    private async Task Load(string text) { input = text; await DesignAsync(); }
+
+    private async Task DesignAsync()
+    {
+        busy = true;
+        status = "Designing guides…";
+        StateHasChanged();
+        await JS.InvokeVoidAsync("gallery.nextFrame");
+        try { Design(); } finally { busy = false; }
+    }
+
+    /// <summary>60 kb synthetic background with a few near-copies of EGFP sites, so specificity is not trivially 100.</summary>
+    private static Sequence Background()
+    {
+        if (_background is not null) return _background;
+        var sb = new StringBuilder(RandomSequence.Dna(60_000, 11, 0.5).ToString());
+        var rng = new Random(5);
+        var egfpGuides = GuideFinder.Find(Sequence.Dna(GalleryData.Egfp, "egfp"));
+        for (int g = 0; g < egfpGuides.Count; g += 2)
+        {
+            var piece = egfpGuides[g].FullSite.ToCharArray();
+            int mismatches = rng.Next(1, 4);
+            for (int m = 0; m < mismatches; m++)
+            {
+                int p = rng.Next(0, 10);
+                piece[p] = piece[p] == 'A' ? 'C' : 'A';
+            }
+            int at = rng.Next(1000, 59_000);
+            sb.Remove(at, piece.Length).Insert(at, piece);
+        }
+        return _background = Sequence.Dna(sb.ToString(), "background");
+    }
+
+    private void Design()
+    {
+        try
+        {
+            notice = null;
+            var sw = Stopwatch.StartNew();
+            string raw = input.TrimStart().StartsWith('>') ? string.Concat(input.Split('\n').Where(l => !l.StartsWith('>'))) : input;
+            string clean = new string(raw.Where(char.IsLetter).ToArray()).ToUpperInvariant();
+            if (clean.Length < 30) { notice = Bench.Notice("Target too short", "Paste a target of at least 30 bases."); status = "Paste a target of at least 30 bases."; return; }
+            var target = Sequence.Dna(clean, "target");
+            targetLength = target.Length;
+            nuclease = CasNuclease.All[Math.Clamp(nucleaseIndex, 0, CasNuclease.All.Count - 1)];
+            CrisprSiteIndex? index = offTargets ? CrisprSiteIndex.Build([target, Background()], nuclease) : null;
+            designs = GuideDesigner.Design(target, new GuideDesignOptions
+            {
+                Search = new GuideSearchOptions { Nuclease = nuclease },
+                OffTargetIndex = index,
+                MaxResults = 15,
+            });
+            sw.Stop();
+            elapsed = GalleryData.Ms(sw);
+            if (designs.Count == 0)
+            {
+                notice = Bench.Notice($"No {nuclease.Name} sites passed the filters",
+                    $"The {nuclease.Pam} PAM does not occur on either strand, or every spacer failed the GC / poly-T / homopolymer filters. Try a relaxed PAM such as SpG (NGN) or SpRY (NNN).");
+                status = $"0 guides for {nuclease}";
+                return;
+            }
+            var best = designs[0];
+            mapSvg = Charts.LinearMap(target.Length, designs.Select((g, i) => new Charts.Mark(g.Guide.Start, g.Guide.End, $"#{i + 1}",
+                i == 0 ? Bench.DyeG : g.Guide.Strand == Strand.Reverse ? Bench.DyeC : Bench.DyeA,
+                g.Guide.Strand == Strand.Reverse ? 1 : 0, Reverse: g.Guide.Strand == Strand.Reverse)).ToList(), ["Guide +", "Guide −"]);
+            trace = best.Guide.FullSite + clean[..Math.Min(clean.Length, 120)];
+            traceLabel = $"TRACE · top guide {best.Guide.Spacer}{best.Guide.Pam}";
+            status = $"{designs.Count} guides · best {best.Guide.Spacer} {best.Guide.Pam} · score {best.CompositeScore:0.000} · {(offTargets ? "off-targets profiled against 60 kb" : "no off-target profiling")} · {elapsed}";
+            snippet = Snippet(clean, nuclease, offTargets);
+        }
+        catch (Exception ex)
+        {
+            notice = Bench.Notice("Design failed", Bench.Explain(ex));
+            status = "Design failed: " + ex.Message;
+        }
+    }
+
+    private static string Snippet(string target, CasNuclease n, bool off) => $$"""
+        using Biotech.Net.Sequences;
+        using Biotech.Net.SyntheticBiology.Crispr;
+
+        var target = Sequence.Dna({{GalleryData.Literal(target)}}, "target");
+        var nuclease = CasNuclease.All.First(n => n.Name == "{{n.Name}}");   // {{n.Pam}} PAM
+
+        // Off-target index over the target plus a background genome (the page uses 60 kb of seeded random DNA)
+        var background = RandomSequence.Dna(60_000, seed: 11, gcContent: 0.5, id: "background");
+        CrisprSiteIndex? index = {{(off ? "CrisprSiteIndex.Build([target, background], nuclease)" : "null")}};
+
+        var designs = GuideDesigner.Design(target, new GuideDesignOptions
+        {
+            Search = new GuideSearchOptions { Nuclease = nuclease },
+            OffTargetIndex = index,
+            MaxResults = 15,
+        });
+        foreach (var d in designs.Take(5))
+            Console.WriteLine($"{d.Guide.Spacer} {d.Guide.Pam} {d.Guide.Strand} cut {d.Guide.CutSite}  on {d.OnTargetScore:F2}  CFD {d.CfdSpecificity:F0}  score {d.CompositeScore:F3}");
+        Console.WriteLine($"U6 oligo for the top guide: {designs[0].Guide.U6CloningOligo}");
+        """;
+}

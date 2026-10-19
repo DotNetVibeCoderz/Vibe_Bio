@@ -6,19 +6,23 @@
   </PropertyGroup>
 
   <ItemGroup Label="Foundation: Gravicode.Science, HF.Net, Visual.Net, RLNet">
-    <PackageVersion Include="Gravicode.Science.GraviNum" Version="1.1.0" />
-    <PackageVersion Include="Gravicode.Science.GraviFrame" Version="1.1.0" />
-    <PackageVersion Include="Gravicode.Science.GraviLearn" Version="1.1.0" />
-    <PackageVersion Include="Gravicode.Science.GraviGraph" Version="1.1.0" />
-    <PackageVersion Include="Gravicode.Science.GraviProb" Version="1.1.0" />
+    <PackageVersion Include="Gravicode.Science.GraviNum" Version="1.3.0" />
+    <PackageVersion Include="Gravicode.Science.GraviFrame" Version="1.3.0" />
+    <PackageVersion Include="Gravicode.Science.GraviLearn" Version="1.3.0" />
+    <PackageVersion Include="Gravicode.Science.GraviGraph" Version="1.3.0" />
+    <PackageVersion Include="Gravicode.Science.GraviProb" Version="1.3.0" />
     <PackageVersion Include="Gravicode.HFNet.GraviHub" Version="0.11.0" />
     <PackageVersion Include="Gravicode.HFNet.GraviTokenizers" Version="0.11.0" />
     <PackageVersion Include="Gravicode.HFNet.GraviTransformers" Version="0.11.0" />
-    <PackageVersion Include="Gravicode.Visual.Net.Core" Version="1.0.0" />
-    <PackageVersion Include="Gravicode.Matplotlib.Net" Version="1.0.0" />
-    <PackageVersion Include="Gravicode.Plotly.Net" Version="1.0.0" />
-    <PackageVersion Include="Gravicode.Seaborn.Net" Version="1.0.0" />
+    <PackageVersion Include="Gravicode.Visual.Net.Core" Version="1.2.0" />
+    <PackageVersion Include="Gravicode.Matplotlib.Net" Version="1.2.0" />
+    <PackageVersion Include="Gravicode.Plotly.Net" Version="1.2.0" />
+    <PackageVersion Include="Gravicode.Seaborn.Net" Version="1.2.0" />
     <PackageVersion Include="Gravicode.RLNet" Version="0.1.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Data formats">
+    <PackageVersion Include="PureHDF" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup Label="Rendering">
@@ -39,6 +43,18 @@
     <PackageVersion Include="Avalonia.Skia" Version="12.1.1" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Web Gallery (Blazor WebAssembly, Roslyn playground)">
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.151.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="GPU (ILGPU: CUDA, OpenCL and a CPU accelerator)">
+    <PackageVersion Include="ILGPU" Version="1.5.3" />
+    <PackageVersion Include="ILGPU.Algorithms" Version="1.5.3" />
   </ItemGroup>
 
   <ItemGroup Label="Benchmarks and tests">

@@ -69,6 +69,12 @@ public sealed class SearchOptions
 
     /// <summary>Compute a full local alignment (with traceback) for each reported hit. Default true.</summary>
     public bool IncludeAlignments { get; set; } = true;
+
+    /// <summary>
+    /// Scorer for the Smith–Waterman stage; null (default) uses <see cref="BioKernels.LocalScoreBatch"/> (Rust or managed).
+    /// A GPU backend from <c>Biotech.Net.Gpu</c> gives identical scores.
+    /// </summary>
+    public ILocalScoreBackend? ScoreBackend { get; set; }
 }
 
 /// <summary>A database hit.</summary>
@@ -205,7 +211,10 @@ public sealed class SequenceDatabase
         }
         var scores = new int[candidates.Count];
         // Query = matrix rows, as in the kernel's profile; matrices used here are symmetric.
-        BioKernels.LocalScoreBatch(query.Span, buffer, offsets, matrix.KernelMatrix, open, extend, scores);
+        if (options.ScoreBackend is { } backend)
+            backend.LocalScoreBatch(query.Span, buffer, offsets, matrix.KernelMatrix, open, extend, scores);
+        else
+            BioKernels.LocalScoreBatch(query.Span, buffer, offsets, matrix.KernelMatrix, open, extend, scores);
 
         var ranked = Enumerable.Range(0, candidates.Count)
             .Select(k => (Index: candidates[k], Score: scores[k],

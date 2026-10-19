@@ -34,8 +34,8 @@ Status per item is tracked in [Progress.md](Progress.md). The architecture is de
 - [x] **Transcriptomics** — normalisation, DESeq2-style / limma-voom-style differential expression, enrichment (ORA, GSEA), single-cell (QC, HVG, PCA, Leiden/Louvain, UMAP, t-SNE, markers).
 - [x] **Proteomics** — ProtParam, digestion, MS/MS matching with target-decoy FDR, quantification, classification.
 - [x] **StructuralBiology** — PDB/mmCIF, geometry, superposition, DSSP-style secondary structure, SASA, pockets.
-- [ ] Statistics hardening: exact DESeq2 parity on public datasets, apeglm-style LFC shrinkage.
-- [ ] BAM/CRAM reading (BGZF + index), tabix.
+- [x] **Statistics hardening** — DESeq2 pipeline and apeglm / normal LFC shrinkage reproduce R (DESeq2 1.52.0, apeglm 1.34.0) on pasilla and airway; Cook's replacement, LRT, independent filtering, poscounts.
+- [x] **BAM/CRAM** — BGZF, SAM/BAM read+write, BAI/CSI, CRAM 3.0/3.1 reading (all codecs except LZMA) + CRAI, tabix (.tbi/.csi) with indexed VCF queries, depth; verified against samtools/htslib 1.24 and the hts-specs conformance files.
 
 ## v3 — Discovery (0.3.x)
 
@@ -43,20 +43,21 @@ Status per item is tracked in [Progress.md](Progress.md). The architecture is de
 - [x] **DrugDiscovery** — virtual screening, target prediction, ADMET, lead optimisation, QSAR.
 - [x] **SyntheticBiology / CRISPR** — guide design with on-/off-target scoring, base and prime editing, codon optimisation, primers, Gibson and Golden Gate assembly, circuit simulation.
 - [x] **AI Platform** — HF.Net model zoo with offline preprocessing, embeddings, ESM variant scoring, and an LLM copilot.
-- [ ] GPU kernels (ILGPU / Vulkan) for all-vs-all alignment and docking.
-- [ ] 3-D conformer generation (ETKDG-like) and flexible docking.
+- [x] **GPU kernels** (`Biotech.Net.Gpu`, ILGPU: CUDA / OpenCL / CPU) — all-vs-all local alignment scores (bit-identical to the CPU path) and batched Vina pose scoring, BFGS and Monte-Carlo docking, with automatic CPU fallback. Vulkan not done.
+- [x] **3-D conformers and flexible docking** — ETKDG-style embedding with the ETKDG v2 + macrocycle torsion library, UFF (matches RDKit to 1e-4 kcal/mol), Vina-style Monte Carlo docking with torsion trees (scores match AutoDock Vina 1.2.7; redock RMSD ≤ ~1 Å on 3PTB and 1STP). MMFF94 and flexible side chains not yet.
 
 ## Beyond / Selanjutnya
 
-- [ ] Blazor web gallery and a hosted playground.
-- [ ] Workflow engine (Snakemake/Nextflow-like DAG in C#).
-- [ ] Cloud data connectors (NCBI E-utilities, UniProt, PDB, Ensembl REST) with caching.
-- [ ] Single-cell at atlas scale (out-of-core sparse matrices, AnnData/h5ad reader).
+- [x] **Web gallery** (`samples/Biotech.Net.WebGallery`, Blazor WebAssembly) — seven pages computed in the browser plus a C# playground compiled by Roslyn in WASM; GitHub Pages workflow ready in `build/workflows/biotechnet-webgallery.yml` (not enabled yet).
+- [x] **Workflow engine** (`Biotech.Net.Workflows`) — Snakemake-style rules with wildcards and sample sheets, DAG with cycle detection, resource-aware parallel scheduling, hash-based incremental re-runs, atomic outputs, shell and C# steps, reports and DOT/Mermaid export.
+- [x] **Cloud data connectors** (`Biotech.Net.Data`) — NCBI E-utilities, UniProt, RCSB PDB + AlphaFold DB, Ensembl REST (incl. VEP); disk/memory cache with TTL and offline mode, per-host rate limiting, retries.
+- [x] **Single-cell at atlas scale** — AnnData h5ad read/write (PureHDF) with backed mode, memory-mapped out-of-core sparse matrices, out-of-core QC, normalisation, HVG (Seurat v3 / Seurat) and PCA matching scanpy 1.12; 1M cells × 30k genes in under 1 GB for QC/HVG. Approximate kNN not yet.
 
 ## Upstream / Hulu
 
 - [x] **HF.Net 0.11.0** (`Vibe_ML/HF.Net`, published to nuget.org on 2026-10-15) — ESM / ESM-2 encoder and tokenizer, NumPy scalars in the pickle reader, models without a tokenizer, and a new package icon. `Biotech.Net.AI` now references 0.11.0.
-- [ ] Let `Biotech.Net.AI` drop its own ESM implementation, restricted pickle reader and Geneformer `vocab.txt` placeholder in favour of HF.Net 0.11.0.
+- [x] `Biotech.Net.AI` dropped its own ESM implementation, restricted pickle reader and Geneformer `vocab.txt` placeholder in favour of HF.Net 0.11.0 (breaking: `EsmModel`/`EsmTokenizer`/`EsmConfig` removed).
+- [ ] **HF.Net 0.11.1** (fixed locally, unpublished) — ESM rotary embeddings use the fp16-rounded `inv_freq` stored in the checkpoint, as transformers 5 does.
 
 ## Release / Rilis
 

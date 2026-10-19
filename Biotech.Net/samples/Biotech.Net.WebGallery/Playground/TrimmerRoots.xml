@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Playground snippets are compiled against the metadata of the trimmed framework that ships with the app, so a
+  member the gallery never calls would otherwise be missing at compile time (for example the
+  DefaultInterpolatedStringHandler.AppendFormatted(value, format) overload behind every $"{x:F2}").
+  These are the System.Private.CoreLib types a snippet commonly touches; they are kept whole.
+  (System.Runtime, System.Console, System.Linq and System.Collections are rooted whole in the .csproj.)
+-->
+<linker>
+  <assembly fullname="System.Private.CoreLib">
+    <type fullname="System.Runtime.CompilerServices.DefaultInterpolatedStringHandler" preserve="all" />
+    <type fullname="System.Runtime.CompilerServices.FormattableStringFactory" preserve="all" />
+    <type fullname="System.FormattableString" preserve="all" />
+    <type fullname="System.String" preserve="all" />
+    <type fullname="System.Text.StringBuilder" preserve="all" />
+    <type fullname="System.Text.StringBuilder/AppendInterpolatedStringHandler" preserve="all" />
+    <type fullname="System.Math" preserve="all" />
+    <type fullname="System.MathF" preserve="all" />
+    <type fullname="System.Convert" preserve="all" />
+    <type fullname="System.Random" preserve="all" />
+    <type fullname="System.Array" preserve="all" />
+    <type fullname="System.Enum" preserve="all" />
+    <type fullname="System.Object" preserve="all" />
+    <type fullname="System.Double" preserve="all" />
+    <type fullname="System.Single" preserve="all" />
+    <type fullname="System.Decimal" preserve="all" />
+    <type fullname="System.Int32" preserve="all" />
+    <type fullname="System.Int64" preserve="all" />
+    <type fullname="System.UInt32" preserve="all" />
+    <type fullname="System.Byte" preserve="all" />
+    <type fullname="System.Char" preserve="all" />
+    <type fullname="System.Boolean" preserve="all" />
+    <type fullname="System.DateTime" preserve="all" />
+    <type fullname="System.TimeSpan" preserve="all" />
+    <type fullname="System.Guid" preserve="all" />
+    <type fullname="System.Nullable`1" preserve="all" />
+    <type fullname="System.Lazy`1" preserve="all" />
+    <type fullname="System.Tuple" preserve="all" />
+    <type fullname="System.ValueTuple" preserve="all" />
+    <type fullname="System.ValueTuple`2" preserve="all" />
+    <type fullname="System.ValueTuple`3" preserve="all" />
+    <type fullname="System.ValueTuple`4" preserve="all" />
+    <type fullname="System.Span`1" preserve="all" />
+    <type fullname="System.ReadOnlySpan`1" preserve="all" />
+    <type fullname="System.MemoryExtensions" preserve="all" />
+    <type fullname="System.Index" preserve="all" />
+    <type fullname="System.Range" preserve="all" />
+    <type fullname="System.StringComparison" preserve="all" />
+    <type fullname="System.StringSplitOptions" preserve="all" />
+    <type fullname="System.Collections.Generic.List`1" preserve="all" />
+    <type fullname="System.Collections.Generic.Dictionary`2" preserve="all" />
+    <type fullname="System.Collections.Generic.HashSet`1" preserve="all" />
+    <type fullname="System.Collections.Generic.KeyValuePair`2" preserve="all" />
+    <type fullname="System.Collections.Generic.KeyValuePair" preserve="all" />
+    <type fullname="System.Collections.Generic.Comparer`1" preserve="all" />
+    <type fullname="System.Collections.Generic.EqualityComparer`1" preserve="all" />
+    <type fullname="System.IO.TextWriter" preserve="all" />
+    <type fullname="System.IO.TextReader" preserve="all" />
+    <type fullname="System.IO.StringWriter" preserve="all" />
+    <type fullname="System.IO.StringReader" preserve="all" />
+    <type fullname="System.IO.MemoryStream" preserve="all" />
+    <type fullname="System.Threading.Tasks.Task" preserve="all" />
+    <type fullname="System.Threading.Tasks.Task`1" preserve="all" />
+    <type fullname="System.Threading.Tasks.ValueTask" preserve="all" />
+    <type fullname="System.Diagnostics.Stopwatch" preserve="all" />
+    <type fullname="System.Globalization.CultureInfo" preserve="all" />
+  </assembly>
+</linker>

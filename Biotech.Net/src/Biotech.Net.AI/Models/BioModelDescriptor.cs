@@ -49,7 +49,7 @@ public enum BioModelBackend
     /// <summary>A BERT-family encoder run by HF.Net's <c>TransformerModel</c>.</summary>
     HfTransformer,
 
-    /// <summary>An ESM-family encoder run by Biotech.Net's managed <c>EsmModel</c>.</summary>
+    /// <summary>An ESM-family encoder (ESM-1b, ESM-1v, ESM-2, Nucleotide Transformer v1) run by HF.Net's ESM encoder.</summary>
     Esm,
 
     /// <summary>A Geneformer BERT checkpoint fed with gene-token ids (<c>GeneformerModel</c>).</summary>

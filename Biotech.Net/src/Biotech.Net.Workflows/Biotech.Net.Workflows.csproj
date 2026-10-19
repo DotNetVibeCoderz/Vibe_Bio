@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Workflows</RootNamespace>
+    <Description>Snakemake/Nextflow-style workflow engine in C#: rules with file and in-memory inputs and outputs, wildcards over sample sheets, scatter/gather, a DAG with parallel scheduling and resources, retries, timeouts, incremental re-runs from content hashes, atomic outputs, shell and in-process steps, events, run reports and Graphviz/Mermaid export. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Core/Biotech.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Workflows.Tests" />
+  </ItemGroup>
+
+</Project>

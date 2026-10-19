@@ -40,9 +40,17 @@ Enums: `BondOrder`, `BondStereo`, `ChiralTag`; `Point3` for coordinates.
 - `Similarity.Tanimoto/Dice/Cosine/Tversky/Sokal/Kulczynski/Russel`, `Compute(metric, …)`, `Bulk`, `BulkTanimoto`, `Matrix`; `SimilarityMetric`.
 - `FingerprintIndex(fingerprinter)`: `Add`, `AddRange`, `Search(query, threshold, metric)`, `TopK(query, k, metric)`, returning `SimilarityHit(Index, Id, Score)`.
 
+## 3-D: conformers, force field, alignment
+
+- `ConformerGenerator.Generate(mol, count, options)` returning `ConformerEnsemble` (`Molecule` with explicit H, `Conformers`, `Energies`, `Attempted`, `Count`, `ToMolecule(i)`, `ToMolecules()`); `ConformerGenerator.Embed(mol, options)` for a single 3-D molecule.
+- `ConformerOptions`: `RandomSeed`, `MaxAttempts`, `UseExperimentalTorsions`, `UseBasicKnowledge`, `UseMacrocycleTorsions`, `ForceTransAmides`, `EnforceChirality`, `PruneRmsThreshold`, `ForceFieldCleanup`, `CleanupMaxIterations`, `MaxDegreeOfParallelism`, `Default` (ETKDGv3-like).
+- `UffForceField.Create/TryCreate(mol)`, `AssignAtomTypes(mol)`, `AtomTypes`, `TermCounts`, `Energy(coords)`, `Energy(coords, gradient)`, `EnergyTerms(coords)` → `UffEnergyTerms(BondStretch, AngleBend, Torsion, Inversion, VanDerWaals, Total)`, `Minimize(coords, maxIterations, gradientTolerance)`, `Optimize(mol)` → `MinimizationResult(Energy, Iterations, Converged)`; `UffParameters.TryGet(label, out UffAtomParameters)`, `Labels`.
+- `AtomHybridization.Compute(mol)`, `ConjugatedBonds(mol)`, `HasConjugatedBond`; `Hybridization` enum (RDKit rules).
+- `ConformerAlignment.Rmsd(a, b, align)`, `Superpose(reference, mobile)`, `BestRmsd(mol, a, b, align, maxAutomorphisms)` (symmetry-aware heavy-atom RMSD), `HeavyAtomAutomorphisms(mol)`.
+
 ## Substructure search
 
-`SmartsPattern.Parse/TryParse`, `IsMatch`, `Matches(mol, unique, maxMatches)`, `CountMatches`, `MatchesAtom`, `MatchingAtoms`, `AtomMap`; `Substructure.HasMatch`, `FindAll`, `FromMolecule(query)`.
+`SmartsPattern.Parse/TryParse`, `IsMatch`, `Matches(mol, unique, maxMatches)`, `CountMatches`, `MatchesAtom`, `MatchingAtoms`, `AtomMap`; `Substructure.HasMatch`, `FindAll`, `FromMolecule(query)`. Besides Daylight SMARTS, the RDKit extensions `^n` (hybridisation) and `r{a-b}` (ring-size range) are understood.
 
 ---
 [API reference index](index.md) · [Chemistry tutorial](../tutorials/chemistry.md)

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Biotech.Net.Gpu/Biotech.Net.Gpu.csproj" />
+  </ItemGroup>
+
+  <!-- The docking complexes (3PTB, 1STP) and Vina reference values live with the DrugDiscovery tests. -->
+  <ItemGroup>
+    <None Include="../Biotech.Net.DrugDiscovery.Tests/Data/**" LinkBase="Data" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

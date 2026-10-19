@@ -1,0 +1,115 @@
+{
+ "vina": "AutoDock Vina v1.2.7",
+ "box_size": 22.5,
+ "crop_radius": 18.0,
+ "complexes": {
+  "3ptb": {
+   "ligand": "BEN",
+   "smiles": "NC(=N)c1ccccc1",
+   "center": [
+    -1.7591111111111113,
+    14.461,
+    16.915777777777777
+   ],
+   "crystal_score": {
+    "affinity": -5.806,
+    "intermolecular": -6.145,
+    "intramolecular": -0.043,
+    "torsional": 0.339
+   },
+   "torsdof": 1,
+   "redock": [
+    {
+     "affinity": -6.204,
+     "rmsd_to_crystal": 0.3775481509603035
+    },
+    {
+     "affinity": -6.203,
+     "rmsd_to_crystal": 0.36463827759574247
+    },
+    {
+     "affinity": -4.997,
+     "rmsd_to_crystal": 3.3004763987609387
+    },
+    {
+     "affinity": -4.856,
+     "rmsd_to_crystal": 3.890335432302858
+    },
+    {
+     "affinity": -4.679,
+     "rmsd_to_crystal": 11.060371240116508
+    },
+    {
+     "affinity": -4.422,
+     "rmsd_to_crystal": 3.2933314043630237
+    },
+    {
+     "affinity": -4.169,
+     "rmsd_to_crystal": 9.876916762871634
+    },
+    {
+     "affinity": -4.031,
+     "rmsd_to_crystal": 9.78600981986047
+    },
+    {
+     "affinity": -4.022,
+     "rmsd_to_crystal": 9.640094357138805
+    }
+   ]
+  },
+  "1stp": {
+   "ligand": "BTN",
+   "smiles": "OC(=O)CCCC[C@@H]1SC[C@@H]2NC(=O)N[C@H]12",
+   "center": [
+    11.117625,
+    1.6800625,
+    -10.7545625
+   ],
+   "crystal_score": {
+    "affinity": -6.576,
+    "intermolecular": -8.691,
+    "intramolecular": -0.186,
+    "torsional": 2.114
+   },
+   "torsdof": 6,
+   "redock": [
+    {
+     "affinity": -7.092,
+     "rmsd_to_crystal": 0.5686304270439799
+    },
+    {
+     "affinity": -5.941,
+     "rmsd_to_crystal": 6.787147330912264
+    },
+    {
+     "affinity": -5.848,
+     "rmsd_to_crystal": 2.2172528382692334
+    },
+    {
+     "affinity": -5.547,
+     "rmsd_to_crystal": 6.742553069397003
+    },
+    {
+     "affinity": -5.534,
+     "rmsd_to_crystal": 6.350095719312813
+    },
+    {
+     "affinity": -5.41,
+     "rmsd_to_crystal": 6.438961105800487
+    },
+    {
+     "affinity": -5.269,
+     "rmsd_to_crystal": 8.36623799199947
+    },
+    {
+     "affinity": -4.964,
+     "rmsd_to_crystal": 6.12665580338779
+    },
+    {
+     "affinity": -4.428,
+     "rmsd_to_crystal": 6.499245520704027
+    }
+   ]
+  }
+ }
+}

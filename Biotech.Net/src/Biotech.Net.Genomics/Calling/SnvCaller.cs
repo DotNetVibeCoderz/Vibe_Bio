@@ -101,6 +101,21 @@ public sealed class Pileup
         Add(record.ReferenceName, (int)record.Position - 1, record.CigarElements, bases, q, record.MapQ);
     }
 
+    /// <summary>Adds a BAM/CRAM/SAM record (unmapped, secondary, QC-fail, duplicate and supplementary reads are skipped).</summary>
+    public void Add(AlignmentRecord record)
+    {
+        const SamFlags skip = SamFlags.Unmapped | SamFlags.Secondary | SamFlags.QcFail | SamFlags.Duplicate | SamFlags.Supplementary;
+        if ((record.Flags & skip) != 0 || record.Sequence.Length == 0) return;
+        Add(record.ReferenceName, record.Position, record.Cigar, record.Sequence, record.Qualities, record.MapQ);
+    }
+
+    /// <summary>Adds many records (for example <c>BamReader.Query(...)</c>).</summary>
+    public Pileup AddRange(IEnumerable<AlignmentRecord> records)
+    {
+        foreach (var r in records) Add(r);
+        return this;
+    }
+
     /// <summary>Adds many alignments.</summary>
     public Pileup AddRange(IEnumerable<ReadAlignment> alignments)
     {

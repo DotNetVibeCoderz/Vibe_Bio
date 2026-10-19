@@ -1,5 +1,6 @@
 using System.Globalization;
 using Biotech.Net.Core;
+using Biotech.Net.Genomics.IO;
 using Biotech.Net.Sequences.IO;
 
 namespace Biotech.Net.Genomics.Vcf;
@@ -20,7 +21,13 @@ public sealed class VcfWriter : IDisposable
     }
 
     /// <summary>Creates a VCF file (gzip when the name ends in <c>.gz</c>).</summary>
-    public static VcfWriter Create(string path, VcfHeader header) => new(BioFile.CreateText(path), header);
+    /// <remarks>A <c>.gz</c>/<c>.bgz</c> path is written as BGZF (gzip-compatible), so it can be indexed with <see cref="TabixIndex.Build(string, TabixConfig, BinningIndexFormat, int)"/>.</remarks>
+    public static VcfWriter Create(string path, VcfHeader header)
+    {
+        if (!BioFile.IsGzipPath(path)) return new(BioFile.CreateText(path), header);
+        var w = new StreamWriter(BgzfWriter.Create(path), new System.Text.UTF8Encoding(false), 1 << 16) { NewLine = "\n" };
+        return new(w, header);
+    }
 
     /// <summary>The header being written.</summary>
     public VcfHeader Header { get; }

@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <!--
+    Biotech.Net Web Gallery: Blazor WebAssembly (standalone) showcase and C# playground. Everything runs client-side
+    on the managed kernels; nothing is sent to a server.
+    Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.WebGallery</RootNamespace>
+    <AssemblyName>Biotech.Net.WebGallery</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <!-- The libraries are not annotated for trimming; only the framework (IsTrimmable assemblies) is trimmed. -->
+    <TrimMode>partial</TrimMode>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <BlazorEnableTimeZoneSupport>false</BlazorEnableTimeZoneSupport>
+  </PropertyGroup>
+
+  <!--
+    SkiaSharp (text metrics for every SVG figure, and PNG) needs its native library linked into dotnet.native.wasm,
+    which requires the wasm-tools workload (dotnet workload install wasm-tools). Without the workload the app still
+    builds and runs, but figures are replaced by a notice. -p:BiotechWasmSkia=false opts out.
+  -->
+  <ItemGroup Condition="'$(BiotechWasmSkia)' != 'false' And '$(WasmNativeWorkloadAvailable)' == 'true'">
+    <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Roslyn is fetched only when the Playground opens. -->
+    <BlazorWebAssemblyLazyLoad Include="Microsoft.CodeAnalysis.wasm" />
+    <BlazorWebAssemblyLazyLoad Include="Microsoft.CodeAnalysis.CSharp.wasm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Keep whole the BCL assemblies that Playground snippets compile against. -->
+    <TrimmerRootAssembly Include="System.Runtime" />
+    <TrimmerRootAssembly Include="System.Console" />
+    <TrimmerRootAssembly Include="System.Linq" />
+    <TrimmerRootAssembly Include="System.Collections" />
+    <TrimmerRootDescriptor Include="Playground/TrimmerRoots.xml" />
+    <!-- Pulled in by Gravicode.Science (GPU kernels, Parquet I/O) but never reached from the browser: trim them. -->
+    <TrimmableAssembly Include="ILGPU" />
+    <TrimmableAssembly Include="ILGPU.Algorithms" />
+    <TrimmableAssembly Include="Parquet" />
+    <TrimmableAssembly Include="ZstdSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The desktop Gallery's demo region (FASTA + GFF3 + VCF) is shared, not copied. -->
+    <EmbeddedResource Include="..\Biotech.Net.Gallery\Data\*.*" LogicalName="WebGallery.Data.%(Filename)%(Extension)" Link="Data\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Biotech.Net.Core/Biotech.Net.Core.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Sequences/Biotech.Net.Sequences.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Alignments/Biotech.Net.Alignments.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Genomics/Biotech.Net.Genomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Transcriptomics/Biotech.Net.Transcriptomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Proteomics/Biotech.Net.Proteomics.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.StructuralBiology/Biotech.Net.StructuralBiology.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Chemistry/Biotech.Net.Chemistry.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.DrugDiscovery/Biotech.Net.DrugDiscovery.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.SyntheticBiology/Biotech.Net.SyntheticBiology.csproj" />
+    <ProjectReference Include="../../src/Biotech.Net.Visualization/Biotech.Net.Visualization.csproj" />
+  </ItemGroup>
+
+</Project>

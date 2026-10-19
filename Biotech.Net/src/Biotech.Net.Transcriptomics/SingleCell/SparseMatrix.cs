@@ -8,7 +8,7 @@ namespace Biotech.Net.Transcriptomics.SingleCell;
 /// Memory is 8 bytes per non-zero (4 for the value, 4 for the column index) plus 4 per row; a 10x run with
 /// 10 000 cells × 33 000 genes at ~2 000 detected genes per cell takes about 160 MB versus 1.3 GB dense.
 /// </remarks>
-public sealed class SparseMatrix
+public sealed class SparseMatrix : ISparseMatrixSource, IRowPointers
 {
     /// <summary>Wraps CSR arrays without copying. Column indices must be sorted per row.</summary>
     public SparseMatrix(int rows, int columns, int[] rowPointers, int[] columnIndices, float[] values)
@@ -248,6 +248,22 @@ public sealed class SparseMatrix
             if (variance[j] < 0) variance[j] = 0;
         }
         return (mean, variance);
+    }
+
+    long ISparseMatrixSource.NonZeroCount => NonZeroCount;
+
+    long IRowPointers.RowPointer(int row) => RowPointers[row];
+
+    /// <summary>A copy of rows <paramref name="start"/> … <paramref name="start"/> + <paramref name="count"/> − 1.</summary>
+    public SparseMatrix ReadRows(int start, int count)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if (start + count > Rows) throw new ArgumentOutOfRangeException(nameof(count));
+        int s = RowPointers[start], e = RowPointers[start + count];
+        var ptr = new int[count + 1];
+        for (int i = 0; i <= count; i++) ptr[i] = RowPointers[start + i] - s;
+        return new SparseMatrix(count, Columns, ptr, ColumnIndices[s..e], Values[s..e]);
     }
 
     /// <summary>A deep copy.</summary>

@@ -15,12 +15,13 @@ Bahasa Indonesia: [dokumentasi](../id/index.md)
 | [Tutorials](tutorials/index.md) | one per module, every snippet compiled and run |
 | [API reference](api-reference/index.md) | key types and methods per module |
 | [Samples](samples.md) | the Avalonia Gallery and the sample notebooks |
-| [Benchmarks](benchmarks.md) | measured Rust-vs-managed numbers, parsers, chemistry, normalisation |
+| [Web Gallery](web-gallery.md) | the Blazor WebAssembly gallery and the in-browser C# Playground: running it, browser limits, deploying to Pages |
+| [Benchmarks](benchmarks.md) | measured Rust-vs-managed numbers, GPU kernels, parsers, chemistry, normalisation |
 | [Roadmap](roadmap.md) | what is shipped, what is next |
 
 ## Tutorials at a glance
 
-[Sequences](tutorials/sequences.md) · [Alignments](tutorials/alignments.md) · [Genomics](tutorials/genomics.md) · [Transcriptomics](tutorials/transcriptomics.md) · [Proteomics](tutorials/proteomics.md) · [Structural biology](tutorials/structural-biology.md) · [Chemistry](tutorials/chemistry.md) · [Drug discovery](tutorials/drug-discovery.md) · [Synthetic biology](tutorials/synthetic-biology.md) · [AI](tutorials/ai.md) · [Visualization](tutorials/visualization.md) · [Notebooks](tutorials/notebooks.md)
+[Sequences](tutorials/sequences.md) · [Alignments](tutorials/alignments.md) · [Genomics](tutorials/genomics.md) · [Transcriptomics](tutorials/transcriptomics.md) · [Proteomics](tutorials/proteomics.md) · [Structural biology](tutorials/structural-biology.md) · [Chemistry](tutorials/chemistry.md) · [Drug discovery](tutorials/drug-discovery.md) · [Synthetic biology](tutorials/synthetic-biology.md) · [AI](tutorials/ai.md) · [Visualization](tutorials/visualization.md) · [Notebooks](tutorials/notebooks.md) · [Cloud data](tutorials/data.md) · [Workflows](tutorials/workflows.md) · [GPU](tutorials/gpu.md)
 
 ## House rules for this documentation
 

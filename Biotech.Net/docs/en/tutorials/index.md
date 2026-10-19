@@ -18,6 +18,9 @@ One tutorial per module. Every C# snippet on these pages is extracted, compiled 
 | 10 | [AI](ai.md) | `Gravicode.Biotech.Net.AI` |
 | 11 | [Visualization](visualization.md) | `Gravicode.Biotech.Net.Visualization` |
 | 12 | [Notebooks](notebooks.md) | `Gravicode.Biotech.Net.Notebooks` |
+| 13 | [Cloud data connectors](data.md) | `Gravicode.Biotech.Net.Data` |
+| 14 | [Workflows](workflows.md) | `Gravicode.Biotech.Net.Workflows` |
+| 15 | [GPU kernels](gpu.md) | `Gravicode.Biotech.Net.Gpu` |
 
 Every tutorial ends with an honest **Limitations** section. Read it before trusting a result in production.
 

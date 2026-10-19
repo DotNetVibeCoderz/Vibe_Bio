@@ -1,0 +1,98 @@
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject PlaygroundState Playground
+
+<PageTitle>@Title · Biotech.Net Web Gallery</PageTitle>
+
+<header class="page-head">
+    <div class="head-row">
+        <div class="head-text">
+            <div class="eyebrow">@Modules</div>
+            <h1 tabindex="-1">@Title</h1>
+            <p class="lede">@Lede</p>
+        </div>
+        <div class="head-actions">
+            @Actions
+            @if (Code is not null)
+            {
+                <button class="quiet" type="button" @onclick="CopyCode">Copy code</button>
+            }
+        </div>
+    </div>
+
+    <div class="ribbon" @key="Trace">
+        @((MarkupString)Bench.Chromatogram(Trace))
+    </div>
+
+    <div class="tabs-row">
+        @if (Code is not null)
+        {
+            <div class="seg" role="tablist">
+                <button type="button" role="tab" aria-selected="@(!showCode)" class="@(showCode ? "" : "on")" @onclick="() => showCode = false">Result</button>
+                <button type="button" role="tab" aria-selected="@showCode" class="@(showCode ? "on" : "")" @onclick="() => showCode = true">Live code</button>
+            </div>
+        }
+        else
+        {
+            <div></div>
+        }
+        <span class="unit">@TraceLabel</span>
+    </div>
+</header>
+
+<div class="page-body">
+    @if (showCode && Code is not null)
+    {
+        <section class="well code-well">
+            <div class="code-head">
+                <span class="unit">C# · reproduces the result on screen · runs in the Playground</span>
+                <span class="code-actions">
+                    <button class="quiet small" type="button" @onclick="CopyCode">Copy</button>
+                    <button class="primary small" type="button" @onclick="OpenInPlayground">Open in Playground</button>
+                </span>
+            </div>
+            <CodeView Code="@Code" />
+        </section>
+    }
+    else
+    {
+        @ChildContent
+    }
+</div>
+
+<footer class="status-line" role="status" aria-live="polite">
+    <span>@Status</span>
+    @if (toast is not null)
+    {
+        <span class="toast">@toast</span>
+    }
+</footer>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string Modules { get; set; } = "";
+    [Parameter] public string Lede { get; set; } = "";
+    [Parameter] public string? Trace { get; set; }
+    [Parameter] public string? TraceLabel { get; set; }
+    [Parameter] public string? Status { get; set; }
+    [Parameter] public string? Code { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool showCode;
+    private string? toast;
+
+    private async Task CopyCode()
+    {
+        if (Code is null) return;
+        bool ok = await JS.InvokeAsync<bool>("gallery.copy", Code);
+        toast = ok ? "Code copied" : "Clipboard blocked by the browser";
+    }
+
+    private void OpenInPlayground()
+    {
+        if (Code is null) return;
+        Playground.Pending = (Title, Code);
+        Nav.NavigateTo("playground");
+    }
+}

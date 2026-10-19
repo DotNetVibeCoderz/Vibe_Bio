@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Vary: accept,accept-encoding,x-uniprot-release,x-api-deployment-date, User-Agent
+Cache-Control: public, max-age=43200
+x-cache: miss cached
+Content-Type: application/json
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: Link, X-Total-Results, X-UniProt-Release, X-UniProt-Release-Date, X-API-Deployment-Date
+X-API-Deployment-Date: 07-October-2026
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+Date: Sun, 18 Oct 2026 22:35:00 GMT
+Access-Control-Max-Age: 1728000
+X-UniProt-Release: 2026_03
+Link: <https://rest.uniprot.org/uniprotkb/search?format=json&fields=accession,id,protein_name,gene_names,organism_name,length,sequence&query=gene%3AHBB%20AND%20reviewed%3Atrue&cursor=88d67348nieocic522oivk1wxnjyupeulz&size=2>; rel="next"
+X-Total-Results: 243
+Transfer-Encoding: chunked
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+X-UniProt-Release-Date: 02-September-2026
+Connection: Keep-Alive
+

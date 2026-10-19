@@ -43,7 +43,17 @@ Package `Gravicode.Biotech.Net.DrugDiscovery` · namespace `Biotech.Net.DrugDisc
 - `VinaScore.Score(pose, receptor or structure, rotatableBonds, options)`, `Score(molecule, receptor, options)`, `Optimize(...)`, `ScoreInPocket(pose, receptor, pocket, …)`, `Rank(poses, receptor, …)`, `Hydrophobic`, `HydrogenBond`.
 - `VinaScoreTerms(Total, Gauss1, Gauss2, Repulsion, Hydrophobic, HydrogenBond, RotatableBonds, ContactCount)` with `Intermolecular` and `Affinity`; `VinaScoreOptions` for the weights and `CutOff`.
 
-Scoring evaluates a given pose and offers a rigid-body local search; there is no conformer generation or flexible docking.
+`VinaScore` is a quick element-typed scorer with a rigid-body local search. For Vina-faithful scores and flexible docking use the types below.
+
+## Flexible docking (AutoDock Vina method)
+
+- `VinaReceptor.FromPdb(path)`, `FromStructure(structure, includeHetero, includeWater)`, `FromAtoms(atoms)`; `Positions`, `Types`, `Atoms`, `DonorsFromHydrogens`, `Count`.
+- `XsAtomType` (Vina's X-Score types `C_H` … `Met_D`); `VinaAtomTypes.AssignLigand(mol)`, `Radius`, `IsHydrophobic`, `IsDonor`, `IsAcceptor`, `HBondPossible`.
+- `VinaDocking.Score(ligand, receptor, weights)` → `VinaPoseScore(Affinity, Intermolecular, Intramolecular, Terms, RotatableBonds)` with `Torsional`; `VinaTermSums(Gauss1, Gauss2, Repulsion, Hydrophobic, HydrogenBond)` with `Weighted(weights)`.
+- `VinaDocking.Dock(ligand, receptor, options)` → `DockingResult` (`Poses`, `Best`, `Grid`, `TorsionCount`, `RotatableBonds`, `Evaluations`, `GridTime`, `SearchTime`, `ToSdf()`, `ToPdbqt()`); `DockedPose` (`Rank`, `Molecule`, `Score`, `Affinity`, `RmsdLowerBound`, `RmsdUpperBound`).
+- `DockingOptions`: `Center`, `Size`, `GridSpacing`, `Exhaustiveness`, `MonteCarloSteps`, `NumPoses`, `EnergyRange`, `MinRmsd`, `Seed`, `Weights`, `MaxDegreeOfParallelism`.
+- `VinaGrid.Build(receptor, center, size, ligandTypes, spacing, weights)`, `Evaluate(type, point, cap, out gradient)`, `Origin`, `Size`, `Spacing`, `Dimensions`.
+- `PdbqtWriter.Write(result)`, `Write(ligand)`.
 
 ---
 [API reference index](index.md) · [Drug discovery tutorial](../tutorials/drug-discovery.md)

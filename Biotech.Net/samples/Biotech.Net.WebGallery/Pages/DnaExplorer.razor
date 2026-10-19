@@ -1,0 +1,226 @@
+@page "/"
+@page "/dna-explorer"
+@using System.Text
+@using Biotech.Net.Sequences
+@using Biotech.Net.Sequences.IO
+
+<PageFrame Title="DNA Explorer" Modules="BIOTECH.NET.SEQUENCES · BIOTECH.NET.CORE"
+           Lede="Paste FASTA to read its composition, translate all six frames, find open reading frames, map restriction sites and estimate primer melting temperature."
+           Trace="@trace" TraceLabel="@traceLabel" Status="@status" Code="@snippet">
+    <div class="split">
+        <div class="col-input">
+            <Panel Title="Input · FASTA">
+                <textarea class="seq-input" rows="12" spellcheck="false" aria-label="FASTA input" @bind="input"></textarea>
+                <div class="chips">
+                    <button class="chip" type="button" @onclick='() => Load(GalleryData.EgfpFasta)'>EGFP</button>
+                    <button class="chip" type="button" @onclick='() => Load(">random_2kb seed 7\n" + GalleryData.Wrap(RandomSequence.Dna(2000, 7, 0.52).ToString(), 60))'>Random 2 kb</button>
+                    <button class="chip" type="button" @onclick='() => Load(GalleryData.Resource("region.fa"))'>Demo region 12 kb</button>
+                </div>
+                <div class="actions"><button class="primary" type="button" @onclick="Analyze">Analyze</button></div>
+            </Panel>
+            <Panel Title="Primer Tm">
+                <label class="field-label" for="oligo">Oligo 5′→3′</label>
+                <input id="oligo" class="seq-line" spellcheck="false" @bind="oligoText" />
+                <p class="caption">50 mM Na⁺, 25 nM oligo. Nearest-neighbour (SantaLucia 1998), with Wallace and salt-adjusted GC for comparison.</p>
+                <button class="quiet" type="button" @onclick="Analyze">Compute Tm</button>
+            </Panel>
+        </div>
+
+        <div class="col-results">
+            @if (error is not null)
+            {
+                @Bench.Notice("Could not analyse the input", error)
+            }
+            else if (seq is not null)
+            {
+                <Panel Title="@($"{seq.Id} · {GalleryData.Preview(seq.Description ?? "", 60)}")" Aside="@($"analysed in {elapsed}")">
+                    <div class="readouts">
+                        <Readout Label="Length" Value="@Bench.N(seq.Length)" Unit="bp" />
+                        <Readout Label="GC content" Value="@Bench.F(gc * 100, "0.0")" Unit="%" Dye="g" />
+                        <Readout Label="dsDNA mass" Value="@Bench.F(mw / 1000, "0.0")" Unit="kDa" />
+                        <Readout Label="ORFs ≥ 50 aa" Value="@orfs.Count.ToString()" Dye="a" />
+                        <Readout Label="Primer Tm" Value="@Bench.F(tmNn, "0.0")" Unit="°C" Dye="c" />
+                    </div>
+                </Panel>
+                <div class="grid-2">
+                    <Panel Title="Base composition" Aside="A C G T N">@((MarkupString)compositionSvg)</Panel>
+                    <Panel Title="GC sliding window" Aside="@($"window {window} bp")">@((MarkupString)gcSvg)</Panel>
+                </div>
+                <Panel Title="Linear map" Aside="@($"{orfs.Count} ORFs · {cutters.Count} enzymes cutting ≤3×")">@((MarkupString)mapSvg)</Panel>
+                <Panel Title="Six-frame translation" Aside="standard code · * = stop">
+                    <pre class="frames">@foreach (var (frame, protein) in frames)
+{<span class="frame-id">@(frame > 0 ? $"+{frame}" : frame.ToString())</span> @GalleryData.Preview(protein, 110)@("\n")}</pre>
+                </Panel>
+                <div class="grid-32">
+                    <Panel Title="Open reading frames" Aside="ATG → stop, ≥ 150 nt">
+                        <table class="data">
+                            <thead><tr><th>Strand</th><th>Frame</th><th>Start</th><th>End</th><th>Length</th><th>Protein</th></tr></thead>
+                            <tbody>
+                                @foreach (var o in orfs.Take(8))
+                                {
+                                    bool rev = o.Strand == Strand.Reverse;
+                                    <tr>
+                                        <td class="@(rev ? "c" : "a")">@(rev ? "−" : "+")</td>
+                                        <td>@o.Frame.ToString("+0;-0")</td>
+                                        <td>@Bench.N(o.Start + 1)</td>
+                                        <td>@Bench.N(o.End)</td>
+                                        <td>@o.ProteinLength aa</td>
+                                        <td class="muted">@GalleryData.Preview(o.Translate(seq).ToString(), 28)</td>
+                                    </tr>
+                                }
+                                @if (orfs.Count == 0)
+                                {
+                                    <tr><td colspan="6" class="muted">No ORF of 150 nt or longer on either strand.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </Panel>
+                    <div class="stack">
+                        <Panel Title="Restriction sites">
+                            <table class="data">
+                                <thead><tr><th>Enzyme</th><th>Site</th><th>Cuts</th><th>Positions</th></tr></thead>
+                                <tbody>
+                                    @foreach (var (enzyme, cuts) in cutters)
+                                    {
+                                        <tr><td class="t">@enzyme.Name</td><td>@enzyme.Site</td><td>@cuts.Count</td><td class="muted">@string.Join(", ", cuts.Select(c => Bench.N(c.Position)))</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </Panel>
+                        <Panel Title="Melting temperature">
+                            @if (oligo is null)
+                            {
+                                <p class="caption">Enter at least 8 bases.</p>
+                            }
+                            else
+                            {
+                                <dl class="kv">
+                                    <dt>Nearest-neighbour Tm</dt><dd class="c">@Bench.F(tmNn, "0.0") °C</dd>
+                                    <dt>Salt-adjusted GC Tm</dt><dd>@Bench.F(tmSalt, "0.0") °C</dd>
+                                    <dt>Wallace (2AT+4GC)</dt><dd>@Bench.F(tmW, "0.0") °C</dd>
+                                    <dt>ΔG°37</dt><dd>@Bench.F(dg, "0.00") kcal/mol</dd>
+                                    <dt>Length / GC</dt><dd>@oligo.Length nt / @Bench.F(oligo.GcContent() * 100, "0")%</dd>
+                                </dl>
+                            }
+                        </Panel>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</PageFrame>
+
+@code {
+    private string input = GalleryData.EgfpFasta;
+    private string oligoText = GalleryData.Egfp[..24];
+    private Sequence? seq, oligo;
+    private double gc, mw, tmNn = double.NaN, tmW, tmSalt, dg;
+    private int window;
+    private List<Orf> orfs = [];
+    private List<(int Frame, string Protein)> frames = [];
+    private List<(RestrictionEnzyme Enzyme, IReadOnlyList<RestrictionCut> Cuts)> cutters = [];
+    private string compositionSvg = "", gcSvg = "", mapSvg = "", elapsed = "", status = "", snippet = "";
+    private string? trace, traceLabel, error;
+
+    protected override void OnInitialized() => Analyze();
+
+    private void Load(string text)
+    {
+        input = text;
+        Analyze();
+    }
+
+    private void Analyze()
+    {
+        try
+        {
+            error = null;
+            var sw = Stopwatch.StartNew();
+            var records = input.TrimStart().StartsWith('>')
+                ? FastaReader.Parse(input)
+                : [Sequence.Parse(new string(input.Where(char.IsLetter).ToArray()), "input")];
+            if (records.Count == 0 || records[0].Length == 0) { error = "Paste a DNA sequence or a FASTA record."; status = error; return; }
+            var s = records[0];
+            if (s.Type != SequenceType.Dna) s = Sequence.Dna(s.ToString().ToUpperInvariant().Replace('U', 'T'), s.Id, s.Description);
+            seq = s;
+
+            var counts = s.Composition();
+            gc = s.GcContent();
+            mw = NucleicAcidMass.MolecularWeight(s, doubleStranded: true);
+            orfs = OrfFinder.Find(s, new OrfOptions { MinLength = 150 }).ToList();
+            frames = SixFrame.Translate(s).Select(f => (f.Frame, f.Protein.ToString())).ToList();
+            cutters = RestrictionEnzymes.All
+                .Select(e => (Enzyme: e, Cuts: RestrictionDigest.FindCuts(s, e)))
+                .Where(x => x.Cuts.Count is > 0 and <= 3)
+                .OrderBy(x => x.Cuts.Count).ThenBy(x => x.Enzyme.Name).Take(12).ToList();
+            window = Math.Clamp(s.Length / 20, 30, 500);
+            var gcWindow = SlidingWindow.GcContent(s, window, Math.Max(1, window / 4));
+
+            string o = new string(oligoText.Where(char.IsLetter).ToArray()).ToUpperInvariant();
+            oligo = o.Length >= 8 ? Sequence.Dna(o, "primer") : null;
+            tmNn = oligo is null ? double.NaN : MeltingTemperature.NearestNeighbor(oligo);
+            tmW = oligo is null ? double.NaN : MeltingTemperature.Wallace(oligo);
+            tmSalt = oligo is null ? double.NaN : MeltingTemperature.SaltAdjustedGc(oligo);
+            dg = oligo is null ? double.NaN : MeltingTemperature.FreeEnergy37(oligo);
+            sw.Stop();
+            elapsed = GalleryData.Ms(sw);
+
+            compositionSvg = Charts.Bars("ACGTN".Select(b =>
+            {
+                long c = counts.TryGetValue(b, out var v) ? v : 0;
+                return new Charts.Bar(b.ToString(), c, Bench.Channel(b), $"{c * 100.0 / s.Length:0.0}%");
+            }).ToList());
+            gcSvg = Charts.Profile(gcWindow.Select(v => v.Value * 100).ToArray(), gc * 100, Bench.DyeG, Bench.DyeC,
+                reference: (gc * 100, $"mean {gc * 100:0.0}%"));
+
+            var marks = new List<Charts.Mark>();
+            foreach (var orf in orfs.Take(12))
+            {
+                bool rev = orf.Strand == Strand.Reverse;
+                marks.Add(new(orf.Start, orf.End, $"{(rev ? "−" : "+")}{Math.Abs(orf.Frame)} · {orf.ProteinLength} aa", rev ? Bench.DyeC : Bench.DyeA, rev ? 1 : 0, Reverse: rev));
+            }
+            foreach (var (enz, cuts) in cutters.Take(8))
+                foreach (var c in cuts) marks.Add(new(c.Position, c.Position, enz.Name, Bench.DyeT, 2, Tick: true));
+            mapSvg = Charts.LinearMap(s.Length, marks, ["ORF +", "ORF −", "Cut sites"]);
+
+            trace = s.ToString();
+            traceLabel = $"TRACE · {s.Id} 1–{Math.Min(s.Length, 150)}";
+            status = $"{s.Id}: {s.Length:N0} bp · GC {gc * 100:0.0}% · {orfs.Count} ORFs · {frames.Count} frames translated · {elapsed} · kernels {BiotechInfo.Backend}";
+            snippet = Snippet(s, o);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            status = "Could not analyse the input: " + ex.Message;
+        }
+    }
+
+    private static string Snippet(Sequence s, string oligo) => $$"""
+        using Biotech.Net.Core;
+        using Biotech.Net.Sequences;
+
+        var seq = Sequence.Dna({{GalleryData.Literal(s.ToString())}}, id: "{{s.Id}}");
+
+        // Composition and GC
+        Console.WriteLine($"{seq.Length} bp, GC {seq.GcContent():P1}");
+        foreach (var (b, n) in seq.Composition()) Console.WriteLine($"  {b}: {n}");
+
+        // Six-frame translation
+        foreach (var (frame, protein) in SixFrame.Translate(seq))
+            Console.WriteLine($"{frame,3} {protein.Preview(60)}");
+
+        // Open reading frames (ATG → stop, ≥ 150 nt, both strands)
+        foreach (var orf in OrfFinder.Find(seq, new OrfOptions { MinLength = 150 }))
+            Console.WriteLine($"{orf}  {orf.Translate(seq).Preview(30)}");
+
+        // Restriction map: enzymes that cut 1–3 times
+        foreach (var (enzyme, cuts) in RestrictionEnzymes.All
+                     .Select(e => (e, RestrictionDigest.FindCuts(seq, e)))
+                     .Where(x => x.Item2.Count is > 0 and <= 3))
+            Console.WriteLine($"{enzyme.Name,-8} {enzyme.Site,-10} {string.Join(", ", cuts.Select(c => c.Position))}");
+
+        // Primer melting temperature (SantaLucia 1998, 50 mM Na+)
+        var primer = Sequence.Dna("{{oligo}}");
+        Console.WriteLine($"Tm {MeltingTemperature.NearestNeighbor(primer):F1} °C, Wallace {MeltingTemperature.Wallace(primer):F1} °C");
+        """;
+}

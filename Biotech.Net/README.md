@@ -34,6 +34,7 @@ Console.WriteLine($"{OrfFinder.Find(dna, new OrfOptions { MinLength = 30 }).Coun
 |---|---|
 | `Gravicode.Biotech.Net.Native` | Rust kernels (sequence, alignment, statistics, protein, structure) with a managed fallback |
 | `Gravicode.Biotech.Net.Core` | `Sequence`, `Alphabet`, `GeneticCode`, `GenomicInterval`, `Gene`/`Transcript`/`Genome`, `Protein`, `Variant`, `Dataset` |
+| `Gravicode.Biotech.Net.Workflows` | Snakemake/Nextflow-style workflow engine in C#: wildcards and sample sheets, scatter/gather, parallel DAG scheduling with resources, retries and timeouts, incremental re-runs from content hashes, atomic outputs, shell and C# steps, run reports, DOT/Mermaid export |
 | `Gravicode.Biotech.Net.Sequences` | FASTA/FASTQ/GenBank/EMBL/PDB I/O, ORFs, motifs, restriction, k-mers, Tm, codon usage |
 | `Gravicode.Biotech.Net.Alignments` | substitution matrices, pairwise and multiple alignment, phylogenetics, database search |
 | `Gravicode.Biotech.Net.Genomics` | VCF, variant effects, read mapping, SNV calling, assembly, gene finding, population genetics |
@@ -43,6 +44,8 @@ Console.WriteLine($"{OrfFinder.Find(dna, new OrfOptions { MinLength = 30 }).Coun
 | `Gravicode.Biotech.Net.Chemistry` | SMILES/SDF, descriptors, fingerprints, substructure search, scaffolds |
 | `Gravicode.Biotech.Net.DrugDiscovery` | virtual screening, target prediction, ADMET, lead optimisation, QSAR |
 | `Gravicode.Biotech.Net.SyntheticBiology` | codon optimisation, primers, Gibson/Golden Gate, circuits, CRISPR analysis |
+| `Gravicode.Biotech.Net.Data` | NCBI E-utilities, UniProt, RCSB PDB, AlphaFold DB and Ensembl REST clients with rate limiting, retries and an offline-capable cache |
+| `Gravicode.Biotech.Net.Gpu` | ILGPU kernels (CUDA, OpenCL, CPU accelerator): all-vs-all Smith–Waterman scores bit-identical to the CPU path, batched Vina pose scoring and Monte-Carlo docking; falls back to the CPU without a GPU |
 | `Gravicode.Biotech.Net.AI` | HF.Net model zoo, embeddings, ESM variant scoring, LLM copilot |
 | `Gravicode.Biotech.Net.Visualization` | genome browser, heatmap, volcano, PCA/UMAP, protein and molecule viewers |
 | `Gravicode.Biotech.Net.Notebooks` | rich formatters for .NET Interactive / Polyglot Notebooks |
@@ -93,7 +96,7 @@ Console.WriteLine($"{OrfFinder.Find(dna, new OrfOptions { MinLength = 30 }).Coun
 
 ### Modul
 
-Daftar paket sama seperti tabel di bagian Inggris di atas: Native, Core, Sequences, Alignments, Genomics, Transcriptomics, Proteomics, StructuralBiology, Chemistry, DrugDiscovery, SyntheticBiology, AI, Visualization, dan Notebooks — semuanya diawali `Gravicode.Biotech.Net.`.
+Daftar paket sama seperti tabel di bagian Inggris di atas: Native, Core, Sequences, Alignments, Genomics, Transcriptomics, Proteomics, StructuralBiology, Chemistry, DrugDiscovery, SyntheticBiology, Data, Gpu, AI, Visualization, dan Notebooks — semuanya diawali `Gravicode.Biotech.Net.`.
 
 ### Dokumentasi
 
@@ -125,6 +128,18 @@ Example figures produced by `Biotech.Net.Visualization`:
 <img src="https://raw.githubusercontent.com/DotNetVibeCoderz/Vibe_Bio/main/Biotech.Net/docs/images/genome-browser.png" alt="Genome browser plot" width="720" />
 
 <img src="https://raw.githubusercontent.com/DotNetVibeCoderz/Vibe_Bio/main/Biotech.Net/docs/images/volcano.png" alt="Volcano plot" width="560" />
+
+---
+
+## Web Gallery and C# Playground — in the browser
+
+`samples/Biotech.Net.WebGallery` is a Blazor WebAssembly twin of the desktop Gallery: DNA Explorer, Genome Browser, Protein Explorer (with 3Dmol.js), Drug Discovery Lab, CRISPR Designer, Transcriptomics (DESeq + volcano) and an in-browser **C# Playground**. In the Playground, Roslyn compiles snippets against the loaded Biotech.Net assemblies and `Show(...)` renders figures. Everything runs client-side on the managed kernels. Run it with `dotnet run --project samples/Biotech.Net.WebGallery`, and see [docs/en/web-gallery.md](docs/en/web-gallery.md) for browser limits and GitHub Pages deployment.
+
+*Bahasa Indonesia:* versi peramban dari Gallery, lengkap dengan C# Playground. Semuanya berjalan di sisi klien. Lihat [docs/id/web-gallery.md](docs/id/web-gallery.md).
+
+<img src="https://raw.githubusercontent.com/DotNetVibeCoderz/Vibe_Bio/main/Biotech.Net/docs/screenshots/webgallery-genome-browser.png" alt="Web Gallery: Genome Browser" width="720" />
+
+<img src="https://raw.githubusercontent.com/DotNetVibeCoderz/Vibe_Bio/main/Biotech.Net/docs/screenshots/webgallery-playground-volcano.png" alt="Web Gallery: C# Playground rendering a volcano plot" width="720" />
 
 ---
 

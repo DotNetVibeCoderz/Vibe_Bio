@@ -1,0 +1,12 @@
+<div class="readout">
+    <label>@Label</label>
+    <b class="@Dye">@Value@if (!string.IsNullOrEmpty(Unit)) {<small>@Unit</small>}</b>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string? Unit { get; set; }
+    /// <summary>Dye channel class (a, c, g, t) or null for ink.</summary>
+    [Parameter] public string? Dye { get; set; }
+}

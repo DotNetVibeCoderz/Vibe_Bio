@@ -66,7 +66,7 @@ foreach (var p in mlm.PredictResidue("MKTAYIAKQRQISFVKSHF", position: 5, topK: 3
     Console.WriteLine($"{p.Token} {p.Score:F3}");
 
 // Efek varian zero-shot (masked marginals)
-var scorer = new EsmVariantScorer(mlm.Esm!);
+var scorer = new EsmVariantScorer(mlm.Model);
 Console.WriteLine(scorer.Score("MKTAYIAKQRQISFVKSHF", "Y5F"));   // tipe liar harus cocok dengan sekuensnya
 var scan = scorer.SaturationScan("MKTAYIAKQRQISFVKSHF", from: 1, to: 5);
 ```
@@ -123,14 +123,14 @@ Console.WriteLine($"{toolbox.Tools.Count} tool terdaftar");
 
 | Model | Backend di sini | Status |
 |---|---|---|
-| ESM-2 (t6 8M, t12 35M, t30 150M, t33 650M), ESM-1v | runtime ESM managed bawaan | didukung — embedding, masked LM, penilaian varian |
+| ESM-2 (t6 8M, t12 35M, t30 150M, t33 650M), ESM-1v | encoder ESM HF.Net | didukung — embedding, masked LM, penilaian varian |
 | BioBERT, PubMedBERT | transformer HF.Net | didukung — embedding teks dan masked LM |
 | ProtBERT, ProtBERT-BFD | transformer HF.Net | didukung; masukan harus residu berspasi (ditangani `Preprocess`) |
 | DNABERT (k = 3…6) | transformer HF.Net | didukung; masukan berupa k-mer tumpang tindih |
 | Geneformer V1 10M / V2 104M | Geneformer | didukung lewat `GeneformerModel` plus pengodean rank-value (bukan lewat `BioEmbedder`) |
-| Nucleotide Transformer 500M human-ref | runtime ESM managed | dapat dimuat, tetapi belum diverifikasi secara numerik terhadap implementasi Python |
+| Nucleotide Transformer 500M human-ref | encoder ESM HF.Net | dapat dimuat, tetapi belum diverifikasi secara numerik terhadap implementasi Python |
 | **DNABERT-2 117M** | — | **tidak didukung.** Kode `bert_layers.py`-nya (BPE + ALiBi) bukan BERT standar, sehingga memuatnya akan menghasilkan angka yang salah; Biotech.Net menolaknya. |
-| **Nucleotide Transformer v2 50M** | — | **tidak didukung.** Memerlukan posisi rotari dengan feed-forward bergerbang (SwiGLU) dari kode modelling khusus, yang tidak diimplementasikan runtime ESM bawaan. |
+| **Nucleotide Transformer v2 50M** | — | **tidak didukung.** Memerlukan posisi rotari dengan feed-forward bergerbang (SwiGLU) dari kode modelling khusus, yang tidak diimplementasikan encoder ESM HF.Net. |
 
 Kedua model yang tidak didukung tetap ada di katalog supaya perkakas bisa menjelaskan *mengapa* keduanya tidak bisa dijalankan: `BioEmbedder.Load` dan `BioMaskedLanguageModel.Load` melempar `NotSupportedException` beserta alasannya.
 

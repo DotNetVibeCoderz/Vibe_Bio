@@ -1,0 +1,10 @@
+reads.30.cram	version=3.0	reads.30.cram.sam.gz
+reads.31.cram	version=3.1	reads.30.cram.sam.gz
+reads.31_small.cram	version=3.1,small	reads.30.cram.sam.gz
+reads.31_archive.cram	version=3.1,archive	reads.30.cram.sam.gz
+reads.30_bzip2.cram	version=3.0,use_bzip2=1,use_rans=0	reads.30.cram.sam.gz
+reads.30_lzma.cram	version=3.0,use_lzma=1,use_rans=0	reads.30.cram.sam.gz
+reads.30_embed.cram	version=3.0,embed_ref=1	reads.30.cram.sam.gz
+reads.30_noref.cram	version=3.0,no_ref=1	reads.30_noref.cram.sam.gz
+reads.30_multi.cram	version=3.0,seqs_per_slice=60,slices_per_container=3	reads.30.cram.sam.gz
+reads.31_lossy_names.cram	version=3.1,lossy_names=1	reads.31_lossy_names.cram.sam.gz

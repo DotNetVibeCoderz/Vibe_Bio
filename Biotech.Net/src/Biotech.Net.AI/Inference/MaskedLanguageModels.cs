@@ -13,19 +13,22 @@ namespace Biotech.Net.AI.Inference;
 public sealed record BioMaskPrediction(string Token, double Score, string Sequence);
 
 /// <summary>
-/// Fill-mask over a biological model: ESM models through <see cref="EsmModel"/>, BERT-family models
-/// (ProtBERT, DNABERT, BioBERT, PubMedBERT) through HF.Net's <see cref="TransformerModel.FillMask"/>.
+/// Fill-mask over a biological model run by HF.Net's <see cref="TransformerModel"/>: ESM models predict one residue
+/// (or k-mer) per mask, BERT-family models (ProtBERT, DNABERT, BioBERT, PubMedBERT) go through
+/// <see cref="TransformerModel.FillMask"/>.
 /// </summary>
 public sealed class BioMaskedLanguageModel : IDisposable
 {
-    private readonly EsmModel? _esm;
-    private readonly TransformerModel? _bert;
+    private readonly bool _ownsModel;
 
-    /// <summary>Wraps an ESM model.</summary>
-    public BioMaskedLanguageModel(EsmModel model) => _esm = model ?? throw new ArgumentNullException(nameof(model));
-
-    /// <summary>Wraps an HF.Net model that has a masked-LM head.</summary>
-    public BioMaskedLanguageModel(TransformerModel model) => _bert = model ?? throw new ArgumentNullException(nameof(model));
+    /// <summary>Wraps an HF.Net model that has a masked-LM head (ESM or BERT family).</summary>
+    /// <param name="model">The model.</param>
+    /// <param name="ownsModel">Whether <see cref="Dispose"/> disposes the model.</param>
+    public BioMaskedLanguageModel(TransformerModel model, bool ownsModel = false)
+    {
+        Model = model ?? throw new ArgumentNullException(nameof(model));
+        _ownsModel = ownsModel;
+    }
 
     /// <summary>Loads a model by catalogue key, repository id or directory.</summary>
     /// <exception cref="Hub.BioModelUnavailableException">Not cached and not downloadable.</exception>
@@ -35,39 +38,39 @@ public sealed class BioMaskedLanguageModel : IDisposable
         string repo = d?.RepoId ?? keyOrRepoId;
         if (d is { Backend: BioModelBackend.NotSupported })
             throw new NotSupportedException($"{d.DisplayName} cannot run in Biotech.Net: {d.Description}");
-        string dir = Hub.BioModelHub.EnsureModel(repo);
-        bool esm = d?.Backend == BioModelBackend.Esm
-                   || File.ReadAllText(Path.Combine(dir, "config.json")).Contains("\"esm\"", StringComparison.OrdinalIgnoreCase);
-        return esm ? new BioMaskedLanguageModel(EsmModel.Open(dir, repo)) : new BioMaskedLanguageModel(TransformerModel.Open(dir));
+        return new BioMaskedLanguageModel(TransformerModel.Open(Hub.BioModelHub.EnsureModel(repo)), ownsModel: true);
     }
 
-    /// <summary>The token that marks the position to predict (<c>&lt;mask&gt;</c> for ESM, usually <c>[MASK]</c> for BERT).</summary>
-    public string MaskToken => _esm is not null ? _esm.Tokenizer.MaskToken
-        : _bert!.Tokenizer.IdToToken(_bert.Tokenizer.MaskId);
+    /// <summary>The HF.Net model.</summary>
+    public TransformerModel Model { get; }
 
-    /// <summary>The ESM model, when this wraps one.</summary>
-    public EsmModel? Esm => _esm;
+    /// <summary>Whether the model is an ESM model.</summary>
+    public bool IsEsm => Model.Config.Esm is not null;
+
+    /// <summary>The token that marks the position to predict (<c>&lt;mask&gt;</c> for ESM, usually <c>[MASK]</c> for BERT).</summary>
+    public string MaskToken => Model.Tokenizer.IdToToken(Model.Tokenizer.MaskId);
 
     /// <summary>Predicts the token at the (first) mask in model-ready <paramref name="input"/>.</summary>
     public IReadOnlyList<BioMaskPrediction> FillMask(string input, int topK = 5)
     {
         ArgumentNullException.ThrowIfNull(input);
         ArgumentOutOfRangeException.ThrowIfLessThan(topK, 1);
-        if (_bert is not null)
-            return [.. _bert.FillMask(input, topK).Select(f => new BioMaskPrediction(f.Token, f.Score, f.Sequence))];
+        if (!IsEsm)
+            return [.. Model.FillMask(input, topK).Select(f => new BioMaskPrediction(f.Token, f.Score, f.Sequence))];
 
-        var tok = _esm!.Tokenizer;
-        var ids = tok.Encode(input);
+        var tok = Model.Tokenizer;
+        string mask = MaskToken;
+        var ids = Esm.Encode(Model, input, Esm.MaxTokens(Model));
         int pos = Array.IndexOf(ids, tok.MaskId);
-        if (pos < 0) throw new ArgumentException($"The input has no {tok.MaskToken} token.", nameof(input));
-        var logp = EsmModel.LogSoftmax(_esm.LogitsAt(_esm.Forward(ids), pos));
-        int maskAt = input.IndexOf(tok.MaskToken, StringComparison.Ordinal);
+        if (pos < 0) throw new ArgumentException($"The input has no {mask} token.", nameof(input));
+        var logp = Esm.LogSoftmax(Model.MaskedLanguageLogits(ids, pos));
+        int maskAt = input.IndexOf(mask, StringComparison.Ordinal);
         return [.. Enumerable.Range(0, logp.Length)
-            .Where(i => !tok.IsSpecial(i))
+            .Where(i => !Esm.IsSpecial(tok, i))
             .OrderByDescending(i => logp[i])
             .Take(topK)
-            .Select(i => new BioMaskPrediction(tok.Token(i), Math.Exp(logp[i]),
-                string.Concat(input.AsSpan(0, maskAt), tok.Token(i), input.AsSpan(maskAt + tok.MaskToken.Length))))];
+            .Select(i => new BioMaskPrediction(tok.IdToToken(i), Math.Exp(logp[i]),
+                string.Concat(input.AsSpan(0, maskAt), tok.IdToToken(i), input.AsSpan(maskAt + mask.Length))))];
     }
 
     /// <summary>
@@ -75,17 +78,16 @@ public sealed class BioMaskedLanguageModel : IDisposable
     /// </summary>
     public IReadOnlyList<BioMaskPrediction> PredictResidue(string protein, int position, int topK = 5)
     {
-        if (_esm is null) throw new NotSupportedException("PredictResidue needs an ESM model; use FillMask with spaced residues for ProtBERT.");
+        if (!IsEsm) throw new NotSupportedException("PredictResidue needs an ESM model; use FillMask with spaced residues for ProtBERT.");
         string seq = SequencePreprocessor.CleanProtein(protein);
         if (position < 1 || position > seq.Length) throw new ArgumentOutOfRangeException(nameof(position));
-        return FillMask(string.Concat(seq.AsSpan(0, position - 1), _esm.Tokenizer.MaskToken, seq.AsSpan(position)), topK);
+        return FillMask(string.Concat(seq.AsSpan(0, position - 1), MaskToken, seq.AsSpan(position)), topK);
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        _esm?.Dispose();
-        _bert?.Dispose();
+        if (_ownsModel) Model.Dispose();
     }
 }
 
@@ -149,16 +151,25 @@ public sealed class EsmVariantScorer
     private readonly Dictionary<(string Sequence, int Position), double[]> _cache = [];
     private readonly Lock _gate = new();
 
-    /// <summary>Creates a scorer.</summary>
-    /// <exception cref="ArgumentException">The model has no language-model head.</exception>
-    public EsmVariantScorer(EsmModel model)
+    /// <summary>Creates a scorer over an ESM model loaded by HF.Net.</summary>
+    /// <exception cref="ArgumentException">The model is not an ESM model or has no language-model head.</exception>
+    public EsmVariantScorer(TransformerModel model)
     {
         Model = model ?? throw new ArgumentNullException(nameof(model));
-        if (!model.HasLanguageModelHead) throw new ArgumentException("Variant scoring needs a checkpoint with a masked-LM head.", nameof(model));
+        Esm.Require(model, nameof(model));
+        if (!model.HasMaskedLanguageHead) throw new ArgumentException("Variant scoring needs a checkpoint with a masked-LM head.", nameof(model));
     }
 
-    /// <summary>The model.</summary>
-    public EsmModel Model { get; }
+    /// <summary>Loads an ESM checkpoint (catalogue key, repository id or directory) and creates a scorer over it.</summary>
+    /// <exception cref="Hub.BioModelUnavailableException">Not cached and not downloadable.</exception>
+    public static EsmVariantScorer Load(string keyOrRepoId = "Esm2T6")
+    {
+        BioModelCatalog.TryGet(keyOrRepoId, out var d);
+        return new EsmVariantScorer(Esm.Load(d?.RepoId ?? keyOrRepoId));
+    }
+
+    /// <summary>The HF.Net ESM model.</summary>
+    public TransformerModel Model { get; }
 
     /// <summary>Log-probabilities over the vocabulary at <paramref name="position"/> (1-based) with that residue masked.</summary>
     public double[] SiteLogProbabilities(string wildType, int position)
@@ -171,7 +182,7 @@ public sealed class EsmVariantScorer
         }
 
         // Sequences longer than the context are scored in a window centred on the site.
-        int maxResidues = Math.Min(Model.Config.MaxPositions, 1024) - 2;
+        int maxResidues = Esm.MaxTokens(Model) - 2;
         int start = 0;
         string window = seq;
         if (seq.Length > maxResidues)
@@ -181,10 +192,10 @@ public sealed class EsmVariantScorer
         }
 
         var tok = Model.Tokenizer;
-        var ids = tok.Encode(window);
+        var ids = tok.Encode(window).ToIdArray();
         int tokenIndex = position - start; // <cls> occupies index 0
         ids[tokenIndex] = tok.MaskId;
-        var logp = EsmModel.LogSoftmax(Model.LogitsAt(Model.Forward(ids), tokenIndex));
+        var logp = Esm.LogSoftmax(Model.MaskedLanguageLogits(ids, tokenIndex));
         lock (_gate) _cache[(seq, position)] = logp;
         return logp;
     }
@@ -199,8 +210,8 @@ public sealed class EsmVariantScorer
             throw new ArgumentException($"{mutation} lies outside the {seq.Length}-residue sequence.", nameof(mutation));
         if (seq[mutation.Position - 1] != mutation.WildType)
             throw new ArgumentException($"{mutation}: residue {mutation.Position} is {seq[mutation.Position - 1]}, not {mutation.WildType}.", nameof(mutation));
-        int wt = Model.Tokenizer.Id(mutation.WildType.ToString());
-        int mt = Model.Tokenizer.Id(mutation.Mutant.ToString());
+        int wt = Esm.IdOf(Model.Tokenizer, mutation.WildType.ToString());
+        int mt = Esm.IdOf(Model.Tokenizer, mutation.Mutant.ToString());
         if (mt < 0 || wt < 0) throw new ArgumentException($"{mutation}: residue not in the model vocabulary.", nameof(mutation));
         var logp = SiteLogProbabilities(seq, mutation.Position);
         return logp[mt] - logp[wt];
@@ -237,10 +248,10 @@ public sealed class EsmVariantScorer
         for (int p = 0; p < positions.Length; p++)
         {
             var logp = SiteLogProbabilities(seq, positions[p]);
-            int wt = tok.Id(seq[positions[p] - 1].ToString());
+            int wt = Esm.IdOf(tok, seq[positions[p] - 1].ToString());
             double wtLog = wt >= 0 ? logp[wt] : 0;
             for (int j = 0; j < StandardAminoAcids.Length; j++)
-                scores[p, j] = logp[tok.Id(StandardAminoAcids[j].ToString())] - wtLog;
+                scores[p, j] = logp[Esm.IdOf(tok, StandardAminoAcids[j].ToString())] - wtLog;
         }
 
         return new MutationalScan(positions, StandardAminoAcids, scores);
@@ -252,9 +263,7 @@ public sealed class EsmVariantScorer
 /// <see cref="GeneformerEncoder"/> token ids.
 /// </summary>
 /// <remarks>
-/// Geneformer has no text tokenizer, and HF.Net refuses to open a checkpoint without one, so a placeholder
-/// <c>vocab.txt</c> (<c>[PAD]</c>, <c>[MASK]</c>, <c>[gene_i]</c>…) sized to the vocabulary is written next to the weights
-/// when missing. It is never used to tokenise: inputs are ids from <see cref="GeneformerEncoder"/>.
+/// Geneformer ships no text tokenizer; HF.Net opens it without one, and it runs from the ids <see cref="GeneformerEncoder"/> makes.
 /// </remarks>
 public sealed class GeneformerModel : IDisposable
 {
@@ -289,18 +298,7 @@ public sealed class GeneformerModel : IDisposable
 
     /// <summary>Loads a Geneformer checkpoint from a directory with <c>config.json</c> and weights.</summary>
     public static GeneformerModel Open(string directory, BioModelDescriptor? descriptor = null)
-    {
-        var config = PretrainedConfig.Load(Path.Combine(directory, "config.json"));
-        string vocab = Path.Combine(directory, "vocab.txt");
-        if (!File.Exists(vocab))
-        {
-            var lines = new List<string>(config.VocabularySize) { "[PAD]", "[MASK]" };
-            for (int i = 2; i < config.VocabularySize; i++) lines.Add($"[gene_{i}]");
-            File.WriteAllLines(vocab, lines);
-        }
-
-        return new GeneformerModel(TransformerModel.Open(directory), descriptor ?? BioModelCatalog.GeneformerV1);
-    }
+        => new(TransformerModel.Open(directory), descriptor ?? BioModelCatalog.GeneformerV1);
 
     /// <summary>Final hidden states for a cell's token ids, row-major <c>[tokens, Dimension]</c>.</summary>
     public float[] Hidden(int[] tokenIds)
@@ -309,7 +307,7 @@ public sealed class GeneformerModel : IDisposable
         if (tokenIds.Length == 0) throw new ArgumentException("The cell has no expressed genes in the dictionary.", nameof(tokenIds));
         int n = Math.Min(tokenIds.Length, Descriptor.MaxTokens);
         var ids = tokenIds[..n];
-        var values = Model.Forward(ids, new int[n], Enumerable.Repeat(1, n).ToArray()).ToArray();
+        var values = Model.Hidden(ids).ToArray();
         var f = new float[values.Length];
         for (int i = 0; i < f.Length; i++) f[i] = (float)values[i];
         return f;

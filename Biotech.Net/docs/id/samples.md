@@ -2,7 +2,7 @@
 
 > Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil
 
-Ada dua cara melihat Biotech.Net bekerja: aplikasi desktop **Gallery** (Avalonia) dan **notebook contoh**.
+Ada dua cara melihat Biotech.Net bekerja: aplikasi desktop **Gallery** (Avalonia) dan **notebook contoh**. Cara ketiga berjalan di peramban: [Web Gallery dan C# Playground](web-gallery.md) (Blazor WebAssembly), dengan halaman yang sama dan compiler di dalam peramban.
 
 ## Biotech.Net Gallery
 

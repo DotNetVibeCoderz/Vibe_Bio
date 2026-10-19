@@ -124,7 +124,7 @@ Console.WriteLine($"CAI of first ORF: {table.Cai(orfs[0].Extract(genome)):F3}");
 ## Limitations
 
 - GenBank/EMBL writing covers the common header lines and the feature table; rarely used lines (for example `CONTIG`) are not written back.
-- `IndexedFastaReader` reads plain FASTA files only, not BGZF-compressed ones. BAM/CRAM and tabix are on the [roadmap](../roadmap.md).
+- `IndexedFastaReader` reads plain FASTA files only, not BGZF-compressed ones. BAM, CRAM and tabix live in `Biotech.Net.Genomics` (see the [Genomics tutorial](genomics.md)).
 - `PdbSequenceReader` extracts sequences only. Use `Biotech.Net.StructuralBiology` for coordinates.
 
 ---

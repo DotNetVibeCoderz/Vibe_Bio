@@ -23,9 +23,12 @@ dotnet add package Gravicode.Biotech.Net.StructuralBiology
 dotnet add package Gravicode.Biotech.Net.Chemistry
 dotnet add package Gravicode.Biotech.Net.DrugDiscovery
 dotnet add package Gravicode.Biotech.Net.SyntheticBiology
+dotnet add package Gravicode.Biotech.Net.Data
+dotnet add package Gravicode.Biotech.Net.Gpu
 dotnet add package Gravicode.Biotech.Net.AI
 dotnet add package Gravicode.Biotech.Net.Visualization
 dotnet add package Gravicode.Biotech.Net.Notebooks
+dotnet add package Gravicode.Biotech.Net.Workflows
 ```
 
 In a notebook:

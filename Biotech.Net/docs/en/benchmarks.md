@@ -61,6 +61,15 @@ What to take from this:
 
 Input is in-memory text, so the numbers measure parsing, not disk. Throughput is derived from the mean time and the input size.
 
+BAM decoding (`BamBenchmarks`, ShortRun in-process job): an in-memory BAM of 200,000 paired reads × 150 bp (random qualities, 34.5 MB compressed).
+
+| Benchmark | Mean | Allocated | Throughput |
+|---|---:|---:|---|
+| BGZF inflate, whole file (CRC32 checked) | 230.8 ms | 2.4 MB | ~150 MB/s compressed |
+| BAM decode to `AlignmentRecord` | 289.1 ms | 111.5 MB | ~690,000 records/s |
+
+Most of the BAM time is deflate decompression; record decoding adds about 0.3 µs per read.
+
 ## Cheminformatics
 
 | Benchmark | Mean | Allocated |
@@ -83,9 +92,49 @@ About 21 µs per SMILES parse and 8.8 µs per ECFP4 fingerprint; bulk Tanimoto o
 
 A full `DESeq.Run` costs considerably more than normalisation alone because of the per-gene GLM fits; the numbers above isolate the normalisation step.
 
+## GPU kernels (Biotech.Net.Gpu, ILGPU)
+
+Measured on 2026-10-20 on the same laptop, whose only GPU is the integrated **Intel UHD Graphics 620** (OpenCL, 24 execution units, shared memory). No NVIDIA GPU was available, so there is no CUDA number. `ILGPU-CPU` is ILGPU's CPU accelerator, which runs the GPU kernels on CPU threads for testing; it is not meant to be fast. Classes `AllVsAllBenchmarks`, `DockingPoseBenchmarks` and `DockingSearchBenchmarks`; each backend is a `Backend` parameter, and OpenCL/CUDA rows appear only when such a device is present.
+
+```bash
+dotnet run -c Release -p:SkipRustBuild=true -- --filter '*AllVsAll*' '*DockingPose*' '*DockingSearch*'
+```
+
+**All-vs-all Smith–Waterman scores**, 64 queries × 128 targets of 100–300 aa, BLOSUM62, gaps 11/1 (≈ 330 M DP cells). The CPU rows run one query per core.
+
+| Backend | Mean | ≈ GCUPS |
+|---|---:|---:|
+| Rust (AVX2 striped, 8 threads) | 33.7 ms | 9.7 |
+| ILGPU-OpenCL (UHD 620) | 113.0 ms | 2.9 |
+| Managed C# (8 threads) | 1,008 ms | 0.33 |
+| ILGPU-CPU accelerator | 3,362 ms | 0.10 |
+
+**Vina objective + gradient for 4,096 poses** of biotin in streptavidin (1STP, 5 torsions):
+
+| Backend | Mean |
+|---|---:|
+| ILGPU-OpenCL (UHD 620) | 5.5 ms |
+| Managed, all cores | 8.3 ms |
+| Managed, one thread | 22.6 ms |
+| ILGPU-CPU accelerator | 55.0 ms |
+
+**Whole docking run**, benzamidine into trypsin (3PTB), default budget, including grid maps and the CPU post-processing:
+
+| Backend | Mean | Best affinity |
+|---|---:|---:|
+| CPU Vina search (exhaustiveness 8, all cores) | 1.55 s | −6.19 kcal/mol |
+| GPU search, 1,024 chains × 106 steps (UHD 620) | 1.55 s | −6.19 kcal/mol |
+
+Honest reading:
+
+- **On this integrated GPU the Rust kernel wins the alignment benchmark by 3.4×.** Four Kaby Lake cores with AVX2 striping are simply faster than 24 low-clock execution units fed from shared DDR4. The GPU kernel is still 9× faster than the managed fallback. Integer DP on a discrete GPU should be one to two orders of magnitude faster than this iGPU, but that has not been measured here.
+- **Pose evaluation is the one place the iGPU wins** (1.5× over managed code on all cores), because each pose is independent float work with no branches on the data path.
+- **Docking breaks even.** The GPU search spends a similar number of energy evaluations as the CPU search and lands on the same best pose; on 1STP it took 7.8 s against 9.5 s on the CPU over three seeds (best affinities −7.01 to −7.21 vs −7.11 to −7.31 kcal/mol). The first GPU run in a process also pays a one-off kernel compilation of a few seconds.
+- No Rust docking kernel exists, so the docking tables have no Rust row; Vulkan is not implemented.
+
 ## Raw reports
 
-The unedited BenchmarkDotNet markdown is kept in the repository at `benchmarks/Biotech.Net.Benchmarks/results/2026-10-15-win-x64-i7-8650U/`, one file per benchmark class, including the full environment header.
+The unedited BenchmarkDotNet markdown is kept in the repository at `benchmarks/Biotech.Net.Benchmarks/results/2026-10-15-win-x64-i7-8650U/`, one file per benchmark class, including the full environment header. The GPU runs are in `results/2026-10-20-win-x64-i7-8650U-uhd620-gpu/`.
 
 ---
 [Documentation index](index.md) · [Native API](api-reference/native.md) · Bahasa Indonesia: [benchmark](../id/benchmarks.md)

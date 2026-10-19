@@ -1,5 +1,6 @@
 using System.Globalization;
 using Biotech.Net.Core;
+using Biotech.Net.Genomics.IO;
 using Biotech.Net.Sequences.IO;
 
 namespace Biotech.Net.Genomics.Vcf;
@@ -37,7 +38,36 @@ public sealed class VcfReader : IDisposable
     }
 
     /// <summary>Opens a VCF file; gzip/BGZF compression is detected from the content.</summary>
-    public static VcfReader Open(string path, VcfReaderOptions? options = null) => new(BioFile.OpenText(path), options);
+    /// <remarks>
+    /// When the file is BGZF-compressed and a tabix index (<c>path.tbi</c> or <c>path.csi</c>) sits beside it,
+    /// <see cref="Query(GenomicInterval)"/> uses the index instead of scanning.
+    /// </remarks>
+    public static VcfReader Open(string path, VcfReaderOptions? options = null)
+    {
+        var reader = new VcfReader(BioFile.OpenText(path), options);
+        if (TabixReader.FindIndex(path) is { } idx && BgzfReader.IsBgzf(path)) reader._indexed = (path, idx);
+        return reader;
+    }
+
+    /// <summary>Opens a BGZF-compressed VCF with an explicit tabix index (<c>.tbi</c> or <c>.csi</c>).</summary>
+    public static VcfReader Open(string path, string indexPath, VcfReaderOptions? options = null)
+    {
+        var reader = new VcfReader(BioFile.OpenText(path), options) { _indexed = (path, indexPath) };
+        return reader;
+    }
+
+    private (string Path, string Index)? _indexed;
+    private TabixReader? _tabix;
+
+    /// <summary>Whether region queries use a tabix index.</summary>
+    public bool IsIndexed => _indexed is not null;
+
+    /// <summary>Records overlapping a samtools-style region (<c>chr1:1000-2000</c>, 1-based inclusive, or <c>chr1</c>).</summary>
+    public IEnumerable<VcfRecord> Query(string region)
+    {
+        var r = HtsRegion.Parse(region, n => _indexed is not null && (_tabix ??= TabixReader.Open(_indexed.Value.Path, _indexed.Value.Index)).Index.GetId(n) >= 0);
+        return Query(new GenomicInterval(r.Name, r.Start, r.End));
+    }
 
     /// <summary>Opens a VCF stream (gzip detected).</summary>
     public static VcfReader Open(Stream stream, VcfReaderOptions? options = null)
@@ -103,6 +133,13 @@ public sealed class VcfReader : IDisposable
     /// </summary>
     public IEnumerable<VcfRecord> Query(GenomicInterval region)
     {
+        if (_indexed is { } ix)
+        {
+            // tabix semantics: REF span, INFO END and SVLEN, exactly as the tabix command; repeatable
+            _tabix ??= TabixReader.Open(ix.Path, ix.Index);
+            foreach (var l in _tabix.Query(region.Chromosome, region.Start, region.End)) yield return ParseLine(l);
+            yield break;
+        }
         string? line;
         if (_pending is not null)
         {
@@ -277,5 +314,9 @@ public sealed class VcfReader : IDisposable
     }
 
     /// <summary>Closes the underlying reader.</summary>
-    public void Dispose() => _reader.Dispose();
+    public void Dispose()
+    {
+        _reader.Dispose();
+        _tabix?.Dispose();
+    }
 }

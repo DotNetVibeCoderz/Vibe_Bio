@@ -53,7 +53,7 @@ public static class ScreenshotRunner
     {
         var frame = window.CaptureRenderedFrame();
         if (frame is null) { Console.Error.WriteLine($"no frame for {file}"); return; }
-        using (var fs = File.Create(file)) frame.Save(fs);
+        using (var fs = File.Create(file)) frame.Save(fs, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
         Console.WriteLine($"saved {file}");
     }
 

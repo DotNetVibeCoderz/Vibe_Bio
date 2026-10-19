@@ -34,6 +34,12 @@ public sealed class DesignMatrix
     /// <summary>Row-major values.</summary>
     public double[] Values { get; }
 
+    /// <summary>
+    /// The categorical variables the matrix was built from (empty for matrices supplied directly). Used to resolve
+    /// level-based contrasts such as <c>("condition", "treated", "untreated")</c>.
+    /// </summary>
+    public IReadOnlyList<DesignFactor> Factors { get; private init; } = [];
+
     /// <summary>Element access.</summary>
     public double this[int sample, int coefficient] => Values[sample * Coefficients + coefficient];
 
@@ -79,28 +85,37 @@ public sealed class DesignMatrix
         int n = data.Columns;
         var names = new List<string> { "Intercept" };
         var cols = new List<double[]> { Enumerable.Repeat(1.0, n).ToArray() };
+        var factors = new List<DesignFactor>();
         foreach (var cov in covariates)
         {
             var ann = Annotation(data, cov);
             var levels = ann.Distinct().Order(StringComparer.Ordinal).ToArray();
+            var at = new List<int> { -1 };
             for (int l = 1; l < levels.Length; l++)
             {
+                at.Add(names.Count);
                 names.Add($"{cov}_{levels[l]}");
                 cols.Add(ann.Select(a => a == levels[l] ? 1.0 : 0.0).ToArray());
             }
+            factors.Add(new DesignFactor(cov, levels, at));
         }
         var f = Annotation(data, factor);
         if (!f.Contains(reference)) throw new ArgumentException($"Reference level '{reference}' does not occur in '{factor}'.");
+        var flevels = new List<string> { reference };
+        var fat = new List<int> { -1 };
         foreach (var level in f.Distinct().Order(StringComparer.Ordinal))
         {
             if (level == reference) continue;
+            flevels.Add(level);
+            fat.Add(names.Count);
             names.Add($"{factor}_{level}_vs_{reference}");
             cols.Add(f.Select(a => a == level ? 1.0 : 0.0).ToArray());
         }
+        factors.Add(new DesignFactor(factor, flevels, fat));
         int p = names.Count;
         var v = new double[n * p];
         for (int j = 0; j < p; j++) for (int i = 0; i < n; i++) v[i * p + j] = cols[j][i];
-        var d = new DesignMatrix(n, names, v);
+        var d = new DesignMatrix(n, names, v) { Factors = factors };
         if (d.Rank() < p) throw new ArgumentException("The design matrix is not of full rank (confounded factors?).");
         return d;
     }
@@ -169,3 +184,11 @@ public sealed class DesignMatrix
     /// <inheritdoc />
     public override string ToString() => $"Design {Samples}×{Coefficients}: {string.Join(", ", CoefficientNames)}";
 }
+
+/// <summary>
+/// A categorical variable of a <see cref="DesignMatrix"/> built with treatment coding.
+/// </summary>
+/// <param name="Name">Annotation name, e.g. <c>condition</c>.</param>
+/// <param name="Levels">Levels with the reference level first.</param>
+/// <param name="Columns">Coefficient index of each level (−1 for the reference level).</param>
+public sealed record DesignFactor(string Name, IReadOnlyList<string> Levels, IReadOnlyList<int> Columns);

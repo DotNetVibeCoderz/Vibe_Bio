@@ -1,0 +1,88 @@
+@page "/about"
+@using System.Runtime.InteropServices
+@using Biotech.Net.Native
+
+<PageFrame Title="About" Modules="BIOTECH.NET · WEB GALLERY"
+           Lede="@(BiotechInfo.Tagline + ". Bioconductor + Biopython for .NET, here running entirely in your browser on WebAssembly.")"
+           Trace="@GalleryData.TextToBases(BiotechInfo.CreditsId)" TraceLabel="TRACE · credits encoded 2 bases/char" Status="@BiotechInfo.Banner" Code="@Snippet">
+    <Panel Title="Biotech.Net">
+        <div class="hero">
+            <img src="img/icon-192.png" width="120" height="120" alt="Biotech.Net logo" />
+            <div>
+                <div class="eyebrow">Credits</div>
+                <p class="credit-line">@BiotechInfo.CreditsId</p>
+                <p class="lede" style="margin-top:0">@BiotechInfo.Credits</p>
+                <p class="unit">@BiotechInfo.Banner</p>
+            </div>
+        </div>
+    </Panel>
+
+    <div class="grid-32" style="margin-top:14px">
+        <div class="stack">
+            <Panel Title="Packages" Aside="@($"{Packages.Length} on NuGet · Gravicode.Biotech.Net.*")">
+                <div class="packages">
+                    @foreach (var (pkg, what, ch) in Packages)
+                    {
+                        <div class="pkg">
+                            <i class="mark @Bench.ChannelClass(ch)" aria-hidden="true"></i>
+                            <div><b>Gravicode.Biotech.Net.@pkg</b><span>@what</span></div>
+                        </div>
+                    }
+                </div>
+            </Panel>
+            <Panel Title="In the browser" Aside="what this build can and cannot do">
+                <ul class="support">
+                    <li><b>Runs here:</b> every page of this gallery and the C# Playground: sequences, alignment, VCF/GFF3, variant effects, DESeq2-style tests, ProtParam, DSSP, SMILES, descriptors, ADMET, similarity, CRISPR design and all SVG figures. Nothing is uploaded; there is no server.</li>
+                    <li><b>Managed kernels:</b> the Rust kernels are native code and cannot load in WebAssembly, so every kernel uses its C# implementation (identical results, slower on large inputs).</li>
+                    <li><b>Single thread:</b> the browser runtime runs on one thread; parallel loops run sequentially and long computations pause the page until they finish.</li>
+                    <li><b>Not available:</b> the AI module (Hugging Face model downloads and local inference, the LLM copilot), GPU kernels (ILGPU), cloud data clients, workflow engines that start processes, and file-system paths. Use the desktop Gallery or a .NET notebook for those.</li>
+                    <li><b>3-D viewers</b> load 3Dmol.js @Biotech.Net.Visualization.ProteinViewer.ThreeDmolVersion from jsDelivr, so they need a network connection.</li>
+                </ul>
+            </Panel>
+        </div>
+        <Panel Title="Runtime">
+            <dl class="kv">
+                <dt>Biotech.Net</dt><dd class="g">@BiotechInfo.Version</dd>
+                <dt>Kernel backend</dt><dd class="@(BioKernels.Backend == KernelBackend.Native ? "a" : "")">@BioKernels.Backend</dd>
+                <dt>Native kernels</dt><dd>@BioKernels.NativeVersion</dd>
+                <dt>.NET runtime</dt><dd>@RuntimeInformation.FrameworkDescription</dd>
+                <dt>OS</dt><dd>@RuntimeInformation.OSDescription</dd>
+                <dt>Architecture</dt><dd>@RuntimeInformation.ProcessArchitecture</dd>
+                <dt>UI</dt><dd>Blazor WebAssembly · Roslyn 5 (loaded by the Playground)</dd>
+                <dt>Desktop sibling</dt><dd>samples/Biotech.Net.Gallery (Avalonia)</dd>
+            </dl>
+        </Panel>
+    </div>
+</PageFrame>
+
+@code {
+    private static readonly (string Package, string What, char Channel)[] Packages =
+    [
+        ("Core", "Sequence, Alphabet, GeneticCode, Genome, Variant, Dataset", 'A'),
+        ("Native", "Rust kernels with managed fallback (reverse complement, translation, alignment)", 'G'),
+        ("Sequences", "FASTA/FASTQ/GenBank/EMBL/PDB I/O, ORFs, restriction, Tm, k-mers", 'A'),
+        ("Alignments", "Pairwise and progressive MSA, substitution matrices, phylogenetics", 'C'),
+        ("Genomics", "VCF, GFF3, read mapping, SNV calling, VEP, assembly, population genetics", 'C'),
+        ("Transcriptomics", "DESeq-style and limma DE, PCA, single-cell clustering, GSEA", 'C'),
+        ("Proteomics", "ProtParam, scales, mass spectrometry, protein classification", 'T'),
+        ("StructuralBiology", "PDB/mmCIF, DSSP, SASA, contacts, superposition, pockets", 'T'),
+        ("Chemistry", "SMILES, SMARTS, fingerprints, descriptors, depiction", 'G'),
+        ("DrugDiscovery", "ADMET, alerts, screening, QSAR, docking, lead optimisation", 'G'),
+        ("SyntheticBiology", "CRISPR design, primers, Gibson/Golden Gate, codon optimisation, circuits", 'A'),
+        ("AI", "DNABERT/ESM/Geneformer preprocessing and inference, bio copilot (desktop only)", 'C'),
+        ("Visualization", "Genome browser, heatmaps, volcano, PCA/UMAP, protein and molecule viewers", 'T'),
+        ("Notebooks", ".NET Interactive formatters for every type", 'A'),
+    ];
+
+    private const string Snippet = """
+        using Biotech.Net.Core;
+
+        Console.WriteLine(BiotechInfo.Banner);
+        Console.WriteLine(BiotechInfo.CreditsId);   // Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil
+        Console.WriteLine($"Kernels: {BiotechInfo.Backend}");
+        Console.WriteLine(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
+
+        // dotnet add package Gravicode.Biotech.Net.Core
+        // dotnet run --project samples/Biotech.Net.WebGallery
+        """;
+}

@@ -8,6 +8,7 @@ An overview of the key types and methods of each module — what exists and wher
 |---|---|---|
 | Native | `Biotech.Net.Native` | [native.md](native.md) |
 | Core | `Biotech.Net.Core` | [core.md](core.md) |
+| Workflows | `Biotech.Net.Workflows` | [workflows.md](workflows.md) |
 | Sequences | `Biotech.Net.Sequences` | [sequences.md](sequences.md) |
 | Alignments | `Biotech.Net.Alignments` | [alignments.md](alignments.md) |
 | Genomics | `Biotech.Net.Genomics` | [genomics.md](genomics.md) |
@@ -17,6 +18,8 @@ An overview of the key types and methods of each module — what exists and wher
 | Chemistry | `Biotech.Net.Chemistry` | [chemistry.md](chemistry.md) |
 | Drug discovery | `Biotech.Net.DrugDiscovery` | [drug-discovery.md](drug-discovery.md) |
 | Synthetic biology | `Biotech.Net.SyntheticBiology` | [synthetic-biology.md](synthetic-biology.md) |
+| Data | `Biotech.Net.Data` | [data.md](data.md) |
+| GPU | `Biotech.Net.Gpu` | [gpu.md](gpu.md) |
 | AI | `Biotech.Net.AI` | [ai.md](ai.md) |
 | Visualization | `Biotech.Net.Visualization` | [visualization.md](visualization.md) |
 | Notebooks | `Biotech.Net.Notebooks` | [notebooks.md](notebooks.md) |

@@ -40,9 +40,17 @@ Enum: `BondOrder`, `BondStereo`, `ChiralTag`; `Point3` untuk koordinat.
 - `Similarity.Tanimoto/Dice/Cosine/Tversky/Sokal/Kulczynski/Russel`, `Compute(metric, …)`, `Bulk`, `BulkTanimoto`, `Matrix`; `SimilarityMetric`.
 - `FingerprintIndex(fingerprinter)`: `Add`, `AddRange`, `Search(query, threshold, metric)`, `TopK(query, k, metric)`, mengembalikan `SimilarityHit(Index, Id, Score)`.
 
+## 3-D: konformer, medan gaya, penjajaran
+
+- `ConformerGenerator.Generate(mol, count, options)` yang mengembalikan `ConformerEnsemble` (`Molecule` dengan H eksplisit, `Conformers`, `Energies`, `Attempted`, `Count`, `ToMolecule(i)`, `ToMolecules()`); `ConformerGenerator.Embed(mol, options)` untuk satu molekul 3-D.
+- `ConformerOptions`: `RandomSeed`, `MaxAttempts`, `UseExperimentalTorsions`, `UseBasicKnowledge`, `UseMacrocycleTorsions`, `ForceTransAmides`, `EnforceChirality`, `PruneRmsThreshold`, `ForceFieldCleanup`, `CleanupMaxIterations`, `MaxDegreeOfParallelism`, `Default` (mirip ETKDGv3).
+- `UffForceField.Create/TryCreate(mol)`, `AssignAtomTypes(mol)`, `AtomTypes`, `TermCounts`, `Energy(coords)`, `Energy(coords, gradient)`, `EnergyTerms(coords)` → `UffEnergyTerms(BondStretch, AngleBend, Torsion, Inversion, VanDerWaals, Total)`, `Minimize(coords, maxIterations, gradientTolerance)`, `Optimize(mol)` → `MinimizationResult(Energy, Iterations, Converged)`; `UffParameters.TryGet(label, out UffAtomParameters)`, `Labels`.
+- `AtomHybridization.Compute(mol)`, `ConjugatedBonds(mol)`, `HasConjugatedBond`; enum `Hybridization` (aturan RDKit).
+- `ConformerAlignment.Rmsd(a, b, align)`, `Superpose(reference, mobile)`, `BestRmsd(mol, a, b, align, maxAutomorphisms)` (RMSD atom berat yang memperhitungkan simetri), `HeavyAtomAutomorphisms(mol)`.
+
 ## Pencarian substruktur
 
-`SmartsPattern.Parse/TryParse`, `IsMatch`, `Matches(mol, unique, maxMatches)`, `CountMatches`, `MatchesAtom`, `MatchingAtoms`, `AtomMap`; `Substructure.HasMatch`, `FindAll`, `FromMolecule(query)`.
+`SmartsPattern.Parse/TryParse`, `IsMatch`, `Matches(mol, unique, maxMatches)`, `CountMatches`, `MatchesAtom`, `MatchingAtoms`, `AtomMap`; `Substructure.HasMatch`, `FindAll`, `FromMolecule(query)`. Selain SMARTS Daylight, ekstensi RDKit `^n` (hibridisasi) dan `r{a-b}` (rentang ukuran cincin) juga dipahami.
 
 ---
 [Indeks referensi API](index.md) · [Tutorial kemoinformatika](../tutorials/chemistry.md)

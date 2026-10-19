@@ -141,93 +141,11 @@ public static class Preprocessing
     public static int[] HighlyVariableGenes(SingleCellExperiment sc, int nTopGenes = 2000, HvgFlavor flavor = HvgFlavor.Seurat, int bins = 20)
     {
         ArgumentNullException.ThrowIfNull(sc);
-        double[] score = flavor == HvgFlavor.Seurat ? SeuratDispersion(sc, bins) : SeuratV3Variance(sc);
-        int g = sc.GeneCount;
-        var order = Enumerable.Range(0, g).ToArray();
-        var keys = score.Select(s => double.IsNaN(s) ? double.NegativeInfinity : -s).ToArray();
-        Array.Sort(keys, order);
-        int take = Math.Min(nTopGenes, g);
-        var flag = new bool[g];
-        for (int k = 0; k < take; k++) if (!double.IsNegativeInfinity(keys[k])) flag[order[k]] = true;
-        sc.GeneFlags["highly_variable"] = flag;
-        var sel = new List<int>(take);
-        for (int j = 0; j < g; j++) if (flag[j]) sel.Add(j);
-        return sel.ToArray();
-    }
-
-    private static double[] SeuratDispersion(SingleCellExperiment sc, int bins)
-    {
-        // scanpy _highly_variable_genes_single_batch, flavor="seurat".
-        var x = sc.X.Clone();
-        var v = x.Values;
-        for (int k = 0; k < v.Length; k++) v[k] = MathF.Exp(v[k]) - 1;
-        var (mean, variance) = x.ColumnMeanVariance();
-        int g = mean.Length;
-        var disp = new double[g]; var lmean = new double[g];
-        for (int j = 0; j < g; j++)
-        {
-            double mu = mean[j] == 0 ? 1e-12 : mean[j];
-            double d = variance[j] / mu;
-            disp[j] = d == 0 ? double.NaN : Math.Log(d);
-            lmean[j] = Math.Log(1 + mu);
-        }
-        // pandas.cut into equal-width bins.
-        double lo = lmean.Min(), hi = lmean.Max();
-        double width = (hi - lo) / bins;
-        var bin = new int[g];
-        for (int j = 0; j < g; j++) bin[j] = width > 0 ? Math.Min(bins - 1, (int)((lmean[j] - lo) / width)) : 0;
-        var sum = new double[bins]; var sq = new double[bins]; var cnt = new int[bins];
-        for (int j = 0; j < g; j++)
-        {
-            if (double.IsNaN(disp[j])) continue;
-            sum[bin[j]] += disp[j]; sq[bin[j]] += disp[j] * disp[j]; cnt[bin[j]]++;
-        }
-        var norm = new double[g];
-        for (int j = 0; j < g; j++)
-        {
-            int b = bin[j];
-            double m = cnt[b] > 0 ? sum[b] / cnt[b] : double.NaN;
-            double sd = cnt[b] > 1 ? Math.Sqrt(Math.Max(0, (sq[b] - cnt[b] * m * m) / (cnt[b] - 1))) : double.NaN;
-            if (cnt[b] == 1) { sd = m; m = 0; } // scanpy: single-gene bins get z = disp / disp = 1
-            norm[j] = double.IsNaN(disp[j]) || !(sd > 0) ? double.NaN : (disp[j] - m) / sd;
-        }
-        sc.GeneMetrics["means"] = lmean;
-        sc.GeneMetrics["dispersions"] = disp;
-        sc.GeneMetrics["dispersions_norm"] = norm;
-        return norm;
-    }
-
-    private static double[] SeuratV3Variance(SingleCellExperiment sc)
-    {
-        // scanpy _highly_variable_genes_seurat_v3 (single batch).
-        var x = sc.Layers.TryGetValue("counts", out var c) ? c : sc.X;
-        var (mean, variance) = x.ColumnMeanVariance();
-        int g = mean.Length, n = x.Rows;
-        var lx = new List<double>(); var ly = new List<double>(); var idx = new List<int>();
-        for (int j = 0; j < g; j++)
-            if (variance[j] > 0) { lx.Add(Math.Log10(mean[j])); ly.Add(Math.Log10(variance[j])); idx.Add(j); }
-        var fitted = NumericUtil.Loess(lx.ToArray(), ly.ToArray(), 0.3, 2);
-        var regStd = new double[g];
-        for (int k = 0; k < idx.Count; k++) regStd[idx[k]] = Math.Sqrt(Math.Pow(10, fitted[k]));
-        var clip = new double[g];
-        for (int j = 0; j < g; j++) clip[j] = regStd[j] * Math.Sqrt(n) + mean[j];
-        var sumX = new double[g]; var sumX2 = new double[g];
-        for (int k = 0; k < x.NonZeroCount; k++)
-        {
-            int j = x.ColumnIndices[k];
-            double v = Math.Min(x.Values[k], clip[j]);
-            sumX[j] += v; sumX2[j] += v * v;
-        }
-        var norm = new double[g];
-        for (int j = 0; j < g; j++)
-        {
-            if (regStd[j] <= 0) { norm[j] = 0; continue; }
-            norm[j] = 1 / ((n - 1) * regStd[j] * regStd[j]) * (n * mean[j] * mean[j] + sumX2[j] - 2 * sumX[j] * mean[j]);
-        }
-        sc.GeneMetrics["means"] = mean;
-        sc.GeneMetrics["variances"] = variance;
-        sc.GeneMetrics["variances_norm"] = norm;
-        return norm;
+        // Same implementation as the out-of-core path (scanpy 1.12 semantics): Seurat on X, Seurat v3 on the counts layer.
+        var source = flavor == HvgFlavor.Seurat ? sc.X : sc.Layers.TryGetValue("counts", out var c) ? c : sc.X;
+        var result = OutOfCore.HighlyVariableGenes(source, nTopGenes, flavor, bins);
+        result.WriteTo(sc);
+        return result.Selected;
     }
 
     /// <summary>

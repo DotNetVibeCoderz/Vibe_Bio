@@ -67,6 +67,42 @@ public static class Normalization
     }
 
     /// <summary>
+    /// DESeq2 <c>estimateSizeFactors(type = "poscounts")</c>: median-of-ratios against the geometric mean of each gene's
+    /// <em>positive</em> counts (divided by the full number of samples), using only positive counts in each sample, then
+    /// scaled so the size factors have geometric mean 1. Works when every gene has at least one zero.
+    /// </summary>
+    public static double[] PosCountsSizeFactors(Dataset counts)
+    {
+        ArgumentNullException.ThrowIfNull(counts);
+        int n = counts.Rows, m = counts.Columns;
+        var logGeo = new double[n];
+        bool any = false;
+        for (int i = 0; i < n; i++)
+        {
+            double s = 0; bool pos = false;
+            foreach (double x in counts.Row(i)) if (x > 0) { s += Math.Log(x); pos = true; }
+            // geoMeans = exp(sum(log(x[x > 0])) / length(x)); log() of it, -Inf for all-zero genes.
+            logGeo[i] = pos ? Math.Log(Math.Exp(s / m)) : double.NegativeInfinity;
+            any |= pos;
+        }
+        if (!any) throw new InvalidOperationException("Every gene is all zero; size factors are undefined.");
+        var sf = new double[m];
+        var ratios = new double[n];
+        for (int j = 0; j < m; j++)
+        {
+            int k = 0;
+            for (int i = 0; i < n; i++)
+                if (double.IsFinite(logGeo[i]) && counts[i, j] > 0) ratios[k++] = Math.Log(counts[i, j]) - logGeo[i];
+            sf[j] = Math.Exp(NumericUtil.MedianInPlace(ratios.AsSpan(0, k)));
+        }
+        double ml = 0;
+        foreach (double v in sf) ml += Math.Log(v);
+        double g = Math.Exp(ml / m);
+        for (int j = 0; j < m; j++) sf[j] /= g;
+        return sf;
+    }
+
+    /// <summary>
     /// edgeR TMM normalisation factors (<c>calcNormFactors(method = "TMM")</c>): weighted trimmed mean of the log
     /// expression ratios against a reference sample, trimming 30% of M-values and 5% of A-values. The reference is
     /// the sample whose upper-quartile factor is closest to the mean, as in edgeR. Factors are scaled to have a

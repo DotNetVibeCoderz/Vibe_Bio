@@ -124,7 +124,7 @@ Console.WriteLine($"CAI ORF pertama: {table.Cai(orfs[0].Extract(genome)):F3}");
 ## Batasan
 
 - Penulisan GenBank/EMBL mencakup baris header umum dan tabel fitur; baris yang jarang dipakai (misalnya `CONTIG`) tidak ditulis kembali.
-- `IndexedFastaReader` hanya membaca FASTA biasa, bukan yang terkompresi BGZF. BAM/CRAM dan tabix masih di [roadmap](../roadmap.md).
+- `IndexedFastaReader` hanya membaca FASTA biasa, bukan yang terkompresi BGZF. BAM, CRAM, dan tabix tersedia di `Biotech.Net.Genomics` (lihat [tutorial Genomika](genomics.md)).
 - `PdbSequenceReader` hanya mengambil sekuens. Untuk koordinat, gunakan `Biotech.Net.StructuralBiology`.
 
 ---

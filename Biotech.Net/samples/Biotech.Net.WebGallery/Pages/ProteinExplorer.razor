@@ -1,0 +1,226 @@
+@page "/protein-explorer"
+@using Biotech.Net.Proteomics
+@using Biotech.Net.StructuralBiology
+@using Biotech.Net.Visualization
+@using Biotech.Net.WebGallery.Playground
+
+<PageFrame Title="Protein Explorer" Modules="BIOTECH.NET.PROTEOMICS · BIOTECH.NET.STRUCTURALBIOLOGY · VISUALIZATION"
+           Lede="ProtParam-style properties and a Kyte–Doolittle hydropathy profile for any sequence, next to crambin (PDB 1CRN, bundled in the library): an interactive 3Dmol.js view, the Cα trace, the contact map and DSSP secondary structure."
+           Trace="@trace" TraceLabel="@traceLabel" Status="@status" Code="@snippet">
+    <div class="split">
+        <div class="col-input">
+            <Panel Title="Sequence">
+                <textarea class="seq-input" rows="6" spellcheck="false" aria-label="Protein sequence" @bind="input"></textarea>
+                <div class="chips">
+                    <button class="chip" type="button" @onclick="() => Load(crambinSeq)">Crambin</button>
+                    <button class="chip" type="button" @onclick='() => Load("FVNQHLCGSHLVEALYLVCGERGFFYTPKT")'>Insulin B</button>
+                    <button class="chip" type="button" @onclick="() => Load(Rhodopsin)">Rhodopsin (GPCR)</button>
+                    <button class="chip" type="button" @onclick="() => Load(Sequence.Dna(GalleryData.Egfp).Translate(toStop: true).ToString())">EGFP</button>
+                </div>
+                <div class="actions"><button class="primary" type="button" @onclick="Analyze">Analyze</button></div>
+            </Panel>
+            @if (pa is not null)
+            {
+                <Panel Title="Properties">
+                    <dl class="kv">
+                        <dt>Aliphatic index</dt><dd>@Bench.F(pa.AliphaticIndex(), "0.0")</dd>
+                        <dt>Aromaticity</dt><dd>@Bench.F(pa.Aromaticity(), "0.000")</dd>
+                        <dt>Net charge at pH 7.0</dt><dd>@pa.NetCharge(7.0).ToString("+0.00;-0.00", CultureInfo.InvariantCulture)</dd>
+                        <dt>ε280 (reduced Cys)</dt><dd>@Bench.F(pa.ExtinctionCoefficient().Reduced, "N0")</dd>
+                        <dt>Abs 0.1% (=1 g/L)</dt><dd>@Bench.F(pa.Absorbance01Percent(), "0.000")</dd>
+                        <dt>Helix / turn / sheet</dt><dd>@ssFractions</dd>
+                        <dt>Half-life (mammalian)</dt><dd>@pa.HalfLife().Text</dd>
+                        <dt>TM segments (KD ≥ 1.6)</dt><dd class="@(tm.Count > 0 ? "g" : "")">@(tm.Count == 0 ? "none" : string.Join(", ", tm.Select(t => $"{t.Start + 1}–{t.End}")))</dd>
+                    </dl>
+                </Panel>
+            }
+        </div>
+
+        <div class="col-results">
+            @if (error is not null)
+            {
+                @Bench.Notice("Could not analyse the sequence", error)
+            }
+            else if (pa is not null)
+            {
+                <Panel Title="ProtParam" Aside="@($"computed in {elapsed}")">
+                    <div class="readouts">
+                        <Readout Label="Length" Value="@length.ToString()" Unit="aa" />
+                        <Readout Label="Mass" Value="@Bench.F(mw / 1000, "0.00")" Unit="kDa" />
+                        <Readout Label="pI" Value="@Bench.F(pi, "0.00")" Dye="c" />
+                        <Readout Label="GRAVY" Value="@gravy.ToString("+0.000;-0.000", CultureInfo.InvariantCulture)" Dye="@(gravy > 0 ? "t" : "c")" />
+                        <Readout Label="Instability" Value="@Bench.F(instability, "0.0")" Unit="@(pa.IsStable ? "stable" : "unstable")" Dye="@(pa.IsStable ? "a" : "t")" />
+                        <Readout Label="ε280" Value="@Bench.F(pa.ExtinctionCoefficient().Cystines, "N0")" Unit="M⁻¹cm⁻¹" />
+                    </div>
+                </Panel>
+            }
+
+            <Panel Title="Structure · 1CRN crambin" Aside="@($"3Dmol.js {ProteinViewer.ThreeDmolVersion} · drag to rotate, scroll to zoom")">
+                <div class="toggles">
+                    <span class="eyebrow">Colour</span>
+                    <select @bind="coloring" @bind:after="RenderStructure" aria-label="Residue colouring">
+                        @foreach (var c in Enum.GetValues<ResidueColoring>())
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    </select>
+                    <span class="eyebrow">Style</span>
+                    <select @bind="style" @bind:after="RenderStructure" aria-label="Representation">
+                        @foreach (var s in Enum.GetValues<MolecularStyle>())
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
+                </div>
+                <iframe class="viewer3d" sandbox="allow-scripts" srcdoc="@viewer3d" title="Crambin 3-D view"></iframe>
+                <div class="figure-pair" style="margin-top:14px">
+                    <div class="figure-well">@traceSvg</div>
+                    <div class="figure-well">@contactSvg</div>
+                </div>
+                <div style="margin-top:12px">
+                    <div class="eyebrow" style="margin-bottom:4px">DSSP · @dsspSummary</div>
+                    <div class="ss-strip">@foreach (var ch in ssString)
+                    {<span class="@(ch == '-' ? "C" : ch == 'G' || ch == 'I' ? "H" : ch == 'B' ? "E" : ch.ToString())">@(ch == '-' ? '·' : ch)</span>}</div>
+                    <div class="ss-strip muted">@residues</div>
+                </div>
+            </Panel>
+
+            @if (pa is not null)
+            {
+                <div class="grid-2">
+                    <Panel Title="Hydropathy · Kyte–Doolittle" Aside="@($"window {window} · amber = predicted TM")">@((MarkupString)hydroSvg)</Panel>
+                    <Panel Title="Amino-acid composition" Aside="counts">@((MarkupString)compSvg)</Panel>
+                </div>
+            }
+        </div>
+    </div>
+</PageFrame>
+
+@code {
+    private const string Rhodopsin = "MNGTEGPNFYVPFSNKTGVVRSPFEAPQYYLAEPWQFSMLAAYMFLLIMLGFPINFLTLYVTVQHKKLRTPLNYILLNLAVADLFMVFGGFTTTLYTSLHGYFVFGPTGCNLEGFFATLGGEIALWSLVVLAIERYVVVCKPMSNFRFGENHAIMGVAFTWVMALACAAPPLVGWSRYIPEGMQCSCGIDYYTPHEETNNESFVIYMFVVHFIIPLIVIFFCYGQLVFTVKEAAAQQQESATTQKAEKEVTRMVIIMVIAFLICWLPYAGVAFYIFTHQGSDFGPIFMTIPAFFAKTSAVYNPVIYIMMNKQFRNCMVTTLCCGKNPLGDDEASTTVSKTETSQVAPA";
+
+    private Structure structure = null!;
+    private string crambinSeq = "";
+    private string input = "";
+    private ProteinAnalysis? pa;
+    private int length, window;
+    private double mw, pi, gravy, instability;
+    private IReadOnlyList<TransmembraneSegment> tm = [];
+    private string ssFractions = "", hydroSvg = "", compSvg = "", elapsed = "", status = "", snippet = "";
+    private string? error, trace, traceLabel;
+    private ResidueColoring coloring = ResidueColoring.SecondaryStructure;
+    private MolecularStyle style = MolecularStyle.Cartoon;
+    private string viewer3d = "", ssString = "", residues = "", dsspSummary = "";
+    private MarkupString traceSvg, contactSvg;
+
+    protected override void OnInitialized()
+    {
+        structure = SampleStructures.Crambin();
+        crambinSeq = structure.Chains[0].ToSequence().ToString();
+        input = crambinSeq;
+        Analyze();
+        RenderStructure();
+    }
+
+    private void Load(string s) { input = s; Analyze(); }
+
+    private void Analyze()
+    {
+        try
+        {
+            error = null;
+            var sw = Stopwatch.StartNew();
+            string seq = new string(input.Where(char.IsLetter).ToArray()).ToUpperInvariant();
+            if (seq.Length < 5) { error = "Enter at least five residues."; status = error; pa = null; return; }
+            pa = new ProteinAnalysis(seq);
+            length = seq.Length;
+            mw = pa.MolecularWeight(); pi = pa.IsoelectricPoint(); gravy = pa.Gravy(); instability = pa.InstabilityIndex();
+            var ss = pa.SecondaryStructureFraction();
+            ssFractions = $"{ss.Helix:0.00} / {ss.Turn:0.00} / {ss.Sheet:0.00}";
+            window = seq.Length >= 60 ? 19 : 9;
+            var profile = pa.Profile(AminoAcidScale.KyteDoolittle, window);
+            tm = TransmembranePredictor.Predict(seq);
+            var counts = pa.AminoAcidCounts();
+            sw.Stop();
+            elapsed = GalleryData.Ms(sw);
+
+            hydroSvg = Charts.Profile(profile, 0, Bench.DyeT, Bench.DyeC, "0.0", reference: (1.6, "TM threshold 1.6"),
+                segments: tm.Select(t => (t.Start, t.End)).ToList());
+            const string order = "AVLIMFWCGPSTNQYHKRDE";
+            compSvg = Charts.Bars(order.Select(a =>
+            {
+                int c = counts.TryGetValue(a, out var v) ? v : 0;
+                return new Charts.Bar(a.ToString(), c, Bench.PlotTheme.AminoAcidColor(a).ToHex(), c.ToString(CultureInfo.InvariantCulture));
+            }).ToList());
+
+            trace = GalleryData.BackTranslate(seq);
+            traceLabel = $"TRACE · back-translated {Math.Min(seq.Length, 50)} aa";
+            status = $"{seq.Length} aa · {mw:N1} Da · pI {pi:0.00} · GRAVY {gravy:0.000} · {tm.Count} TM segments · {elapsed}";
+            snippet = Snippet(seq, window);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            status = "Could not analyse the sequence: " + ex.Message;
+        }
+    }
+
+    private void RenderStructure()
+    {
+        try
+        {
+            viewer3d = Display.HtmlDocument(ProteinViewer.To3DHtml(structure, new Viewer3DOptions
+            {
+                Width = 1200, Height = 418, Coloring = coloring, Style = style, Theme = Bench.PlotTheme,
+            }));
+            var caTrace = ProteinViewer.CaTrace(structure);
+            caTrace.Theme = Bench.PlotTheme;
+            caTrace.Coloring = coloring;
+            caTrace.Width = 420; caTrace.Height = 340;
+            caTrace.LabelEvery = 10;
+            traceSvg = Bench.Svg(caTrace);
+            var contact = ProteinViewer.ContactMap(structure, cutoff: 8.0);
+            contact.Theme = Bench.PlotTheme;
+            contact.Width = 420; contact.Height = 340;
+            contact.ShowDistances = true;
+            contactSvg = Bench.Svg(contact);
+
+            var dssp = Dssp.Assign(structure);
+            ssString = dssp.ToSecondaryStructureString();
+            residues = string.Concat(dssp.Residues.Select(r => r.Residue.OneLetterCode));
+            var comp = dssp.Composition();
+            int Count(params SecondaryStructure[] s) => s.Sum(x => comp.TryGetValue(x, out var n) ? n : 0);
+            dsspSummary = $"{Count(SecondaryStructure.AlphaHelix, SecondaryStructure.Helix310, SecondaryStructure.PiHelix)} helix · {Count(SecondaryStructure.Strand, SecondaryStructure.Bridge)} strand · {ssString.Length} residues";
+        }
+        catch (Exception ex)
+        {
+            traceSvg = Bench.Notice("Structure view failed", Bench.Explain(ex));
+        }
+    }
+
+    private string Snippet(string seq, int w) => $$"""
+        using Biotech.Net.Proteomics;
+        using Biotech.Net.StructuralBiology;
+        using Biotech.Net.Visualization;
+
+        // ProtParam
+        string sequence = {{GalleryData.Literal(seq)}};
+        var pa = new ProteinAnalysis(sequence);
+        Console.WriteLine($"MW {pa.MolecularWeight():N1} Da, pI {pa.IsoelectricPoint():F2}, GRAVY {pa.Gravy():F3}");
+        Console.WriteLine($"instability {pa.InstabilityIndex():F1} (stable: {pa.IsStable}), ε280 {pa.ExtinctionCoefficient().Cystines}");
+
+        // Hydropathy profile and transmembrane segments
+        double[] kd = pa.Profile(AminoAcidScale.KyteDoolittle, window: {{w}});
+        foreach (var seg in TransmembranePredictor.Predict(sequence)) Console.WriteLine($"TM {seg.Start + 1}-{seg.End}");
+
+        // Structure: crambin is embedded in the library (no download)
+        Structure crambin = SampleStructures.Crambin();
+        Console.WriteLine(Dssp.Assign(crambin).ToSecondaryStructureString());
+
+        var trace = ProteinViewer.CaTrace(crambin);
+        trace.Coloring = ResidueColoring.{{coloring}};
+        trace.Theme = BioTheme.Dark;
+        Show(trace);                                              // Cα trace as SVG
+        Show(crambin);                                            // interactive 3Dmol.js viewer
+        """;
+}

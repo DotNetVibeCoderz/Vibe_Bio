@@ -18,6 +18,9 @@ Satu tutorial untuk setiap modul. Semua cuplikan C# di halaman-halaman ini dieks
 | 10 | [AI](ai.md) | `Gravicode.Biotech.Net.AI` |
 | 11 | [Visualisasi](visualization.md) | `Gravicode.Biotech.Net.Visualization` |
 | 12 | [Notebook](notebooks.md) | `Gravicode.Biotech.Net.Notebooks` |
+| 13 | [Konektor data cloud](data.md) | `Gravicode.Biotech.Net.Data` |
+| 14 | [Workflow](workflows.md) | `Gravicode.Biotech.Net.Workflows` |
+| 15 | [Kernel GPU](gpu.md) | `Gravicode.Biotech.Net.Gpu` |
 
 Setiap tutorial ditutup bagian **Batasan** yang jujur. Bacalah sebelum memercayai hasilnya di produksi.
 

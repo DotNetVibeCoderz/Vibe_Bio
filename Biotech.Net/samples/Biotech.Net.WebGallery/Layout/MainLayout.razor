@@ -1,0 +1,52 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="chassis">
+    <aside class="rail" aria-label="Gallery navigation">
+        <a class="brand" href="">
+            <img src="img/icon-64.png" width="34" height="34" alt="" />
+            <span>
+                <b>BIOTECH.NET</b>
+                <small>WEB GALLERY · BENCH</small>
+            </span>
+        </a>
+        <div class="stripe" aria-hidden="true"><i class="a"></i><i class="c"></i><i class="g"></i><i class="t"></i></div>
+
+        <nav>
+            <div class="eyebrow rail-label">Modules</div>
+            @foreach (var item in Items)
+            {
+                <NavLink class="nav" href="@item.Href" Match="@(item.Href == "" ? NavLinkMatch.All : NavLinkMatch.Prefix)">
+                    <i class="mark @item.Dye" aria-hidden="true"></i><span>@item.Title</span>
+                </NavLink>
+            }
+        </nav>
+
+        <footer class="rail-foot">
+            <div class="kernel"><i class="lamp" aria-hidden="true"></i><span>@Kernels</span><span class="ver">v@(BiotechInfo.Version)</span></div>
+            <div class="credit">@BiotechInfo.CreditsId</div>
+        </footer>
+    </aside>
+
+    <main class="stage">
+        @Body
+    </main>
+</div>
+
+@code {
+    private sealed record NavItem(string Href, string Title, string Dye);
+
+    private static readonly NavItem[] Items =
+    [
+        new("", "DNA Explorer", "a"),
+        new("genome-browser", "Genome Browser", "c"),
+        new("protein-explorer", "Protein Explorer", "t"),
+        new("drug-discovery", "Drug Discovery Lab", "g"),
+        new("crispr-designer", "CRISPR Designer", "a"),
+        new("transcriptomics", "Transcriptomics", "c"),
+        new("playground", "C# Playground", "g"),
+        new("about", "About", "t"),
+    ];
+
+    private static string Kernels => BiotechInfo.Backend == Biotech.Net.Native.KernelBackend.Native ? "Rust kernels" : "Managed · WASM";
+}

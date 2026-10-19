@@ -15,14 +15,15 @@ English: [documentation](../en/index.md)
 | [Tutorial](tutorials/index.md) | satu per modul, setiap cuplikan kode dikompilasi dan dijalankan |
 | [Referensi API](api-reference/index.md) | tipe dan metode utama per modul |
 | [Contoh](samples.md) | aplikasi Gallery (Avalonia) dan notebook contoh |
-| [Benchmark](benchmarks.md) | angka nyata Rust vs managed, parser, kimia, normalisasi |
+| [Web Gallery](web-gallery.md) | galeri Blazor WebAssembly dan C# Playground di peramban: cara menjalankan, batasan peramban, deploy ke Pages |
+| [Benchmark](benchmarks.md) | angka nyata Rust vs managed, kernel GPU, parser, kimia, normalisasi |
 | [Roadmap](roadmap.md) | yang sudah selesai dan yang berikutnya |
 
 Nama berkas di `docs/id/` sengaja sama persis dengan `docs/en/` supaya kedua pohon dokumentasi bercermin satu lawan satu (`getting-started.md` = Pendahuluan, `installation.md` = Instalasi, `tutorials/` = Tutorial, `api-reference/` = Referensi API, `samples.md` = Contoh, `benchmarks.md` = Benchmark).
 
 ## Tutorial sekilas
 
-[Sekuens](tutorials/sequences.md) · [Penjajaran](tutorials/alignments.md) · [Genomika](tutorials/genomics.md) · [Transkriptomika](tutorials/transcriptomics.md) · [Proteomika](tutorials/proteomics.md) · [Biologi struktural](tutorials/structural-biology.md) · [Kimia](tutorials/chemistry.md) · [Penemuan obat](tutorials/drug-discovery.md) · [Biologi sintetik](tutorials/synthetic-biology.md) · [AI](tutorials/ai.md) · [Visualisasi](tutorials/visualization.md) · [Notebook](tutorials/notebooks.md)
+[Sekuens](tutorials/sequences.md) · [Penjajaran](tutorials/alignments.md) · [Genomika](tutorials/genomics.md) · [Transkriptomika](tutorials/transcriptomics.md) · [Proteomika](tutorials/proteomics.md) · [Biologi struktural](tutorials/structural-biology.md) · [Kimia](tutorials/chemistry.md) · [Penemuan obat](tutorials/drug-discovery.md) · [Biologi sintetik](tutorials/synthetic-biology.md) · [AI](tutorials/ai.md) · [Visualisasi](tutorials/visualization.md) · [Notebook](tutorials/notebooks.md) · [Data cloud](tutorials/data.md) · [Workflow](tutorials/workflows.md) · [GPU](tutorials/gpu.md)
 
 ## Aturan main dokumentasi ini
 

@@ -1,0 +1,3 @@
+R version 4.6.1 (2026-06-24 ucrt)
+DESeq2 1.52.0
+apeglm 1.34.0

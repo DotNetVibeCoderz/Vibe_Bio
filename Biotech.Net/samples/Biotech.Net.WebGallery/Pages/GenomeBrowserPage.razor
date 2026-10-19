@@ -1,0 +1,215 @@
+@page "/genome-browser"
+@using Biotech.Net.Genomics.Annotation
+@using Biotech.Net.Genomics.Vcf
+@using Biotech.Net.Sequences
+@using Biotech.Net.Sequences.IO
+@using Biotech.Net.Visualization
+@inject IJSRuntime JS
+
+<PageFrame Title="Genome Browser" Modules="BIOTECH.NET.VISUALIZATION · BIOTECH.NET.GENOMICS"
+           Lede="A bundled 12 kb region with GFF3 gene models and VCF calls. Pan, zoom and toggle tracks; every variant in view is annotated with its predicted consequence."
+           Trace="@trace" TraceLabel="@traceLabel" Status="@status" Code="@snippet">
+    <Actions>
+        <button class="quiet" type="button" @onclick="SaveSvg" disabled="@(svgText is null)">Save SVG</button>
+    </Actions>
+    <ChildContent>
+        <Panel Title="Tracks" Aside="GFF3 · VCF · FASTA">
+            <div class="toolbar">
+                <div class="region"><span class="eyebrow">Region</span><span class="mono">@regionLabel</span></div>
+                <div class="toolbar-right">
+                    <span class="eyebrow">Go to</span>
+                    @foreach (var g in genome.Genes)
+                    {
+                        <button class="chip" type="button" @onclick="() => Focus(g)">@g.Name</button>
+                    }
+                    <span class="sep"></span>
+                    <button class="quiet small" type="button" @onclick="() => Pan(-0.33)">◀ Pan</button>
+                    <button class="quiet small" type="button" @onclick="() => Pan(0.33)">Pan ▶</button>
+                    <button class="quiet small" type="button" @onclick="() => Zoom(0.5)">Zoom in</button>
+                    <button class="quiet small" type="button" @onclick="() => Zoom(2)">Zoom out</button>
+                    <button class="quiet small" type="button" @onclick="Whole">Whole region</button>
+                </div>
+            </div>
+            <div class="toggles">
+                <span class="eyebrow">Tracks</span>
+                <label><input type="checkbox" @bind="ruler" @bind:after="Render" /> Ruler</label>
+                <label><input type="checkbox" @bind="genes" @bind:after="Render" /> Genes</label>
+                <label><input type="checkbox" @bind="gcTrack" @bind:after="Render" /> GC %</label>
+                <label><input type="checkbox" @bind="varTrack" @bind:after="Render" /> Variants</label>
+                <label><input type="checkbox" @bind="seqTrack" @bind:after="Render" /> Sequence</label>
+            </div>
+            <div class="well figure-well wide">@figure</div>
+        </Panel>
+
+        <Panel Title="Variants in view · predicted effect" Aside="VariantEffectPredictor · Sequence Ontology terms">
+            <div class="table-scroll">
+                <table class="data">
+                    <thead><tr><th>Pos</th><th>ID</th><th>Ref&gt;Alt</th><th>Type</th><th>AF</th><th>Gene</th><th>Consequence</th><th>HGVS</th><th>Impact</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in rows)
+                        {
+                            <tr>
+                                <td>@Bench.N(r.Pos)</td>
+                                <td>@r.Id</td>
+                                <td class="c">@r.Change</td>
+                                <td>@r.Type</td>
+                                <td><span class="meter"><i style="width:@((r.Af * 100).ToString("0", CultureInfo.InvariantCulture))%"></i></span>@(double.IsNaN(r.Af) ? "." : r.Af.ToString("0.00", CultureInfo.InvariantCulture))</td>
+                                <td>@r.Gene</td>
+                                <td>@r.Consequence</td>
+                                <td class="muted">@r.Hgvs</td>
+                                <td class="@r.ImpactClass">@r.Impact</td>
+                            </tr>
+                        }
+                        @if (rows.Count == 0)
+                        {
+                            <tr><td colspan="9" class="muted">No variants in this window. Zoom out or jump to a gene.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </Panel>
+    </ChildContent>
+</PageFrame>
+
+@code {
+    private sealed record Row(long Pos, string Id, string Change, string Type, double Af, string Gene, string Consequence, string Hgvs, string Impact, string ImpactClass);
+
+    private Genome genome = null!;
+    private Sequence chr = null!;
+    private List<Variant> variants = [];
+    private VariantEffectPredictor vep = null!;
+    private double[] gc = [];
+    private int gcStart;
+    private long start, end;
+    private bool ruler = true, genes = true, gcTrack = true, varTrack = true, seqTrack = true;
+    private MarkupString figure;
+    private string? svgText, trace, traceLabel;
+    private string regionLabel = "", status = "", snippet = "";
+    private List<Row> rows = [];
+
+    protected override void OnInitialized()
+    {
+        chr = FastaReader.Parse(GalleryData.Resource("region.fa"))[0];
+        genome = new Genome("Gallery demo", "synthetic", "demo-1").Add(Chromosome.FromSequence(chr));
+        using (var gff = new StringReader(GalleryData.Resource("region.gff3")))
+            foreach (var g in GffReader.BuildGenes(GffReader.Read(gff))) genome.Add(g);
+        variants = VcfReader.Parse(GalleryData.Resource("region.vcf")).Records.Select(r => r.Variant).ToList();
+        vep = new VariantEffectPredictor(genome);
+        var gcWin = SlidingWindow.GcContent(chr, 50, 1);
+        gc = gcWin.Select(w => w.Value * 100).ToArray();
+        gcStart = gcWin.Count > 0 ? gcWin[0].Start + 25 : 0;
+        start = 0; end = chr.Length;
+        Render();
+    }
+
+    private void Focus(Gene g)
+    {
+        long pad = g.Location.Length / 8;
+        start = Math.Max(0, g.Location.Start - pad);
+        end = Math.Min(chr.Length, g.Location.End + pad);
+        Render();
+    }
+
+    private void Whole() { start = 0; end = chr.Length; Render(); }
+
+    private void Pan(double fraction)
+    {
+        long span = end - start, shift = (long)(span * fraction);
+        start = Math.Clamp(start + shift, 0, chr.Length - span);
+        end = start + span;
+        Render();
+    }
+
+    private void Zoom(double factor)
+    {
+        long span = end - start, mid = (start + end) / 2;
+        long ns = Math.Clamp((long)(span * factor), 60, chr.Length);
+        start = Math.Clamp(mid - ns / 2, 0, chr.Length - ns);
+        end = start + ns;
+        Render();
+    }
+
+    private void Render()
+    {
+        try
+        {
+            var sw = Stopwatch.StartNew();
+            var region = new GenomicInterval(chr.Id, start, end);
+            var view = new GenomeBrowser(region, width: 1080) { Theme = Bench.PlotTheme, NameGutter = 92 };
+            if (ruler) view.AddRuler();
+            if (genes) view.AddGenes(genome.GenesIn(region), "Genes");
+            if (gcTrack) view.AddCoverage(gc, gcStart, "GC % (50 bp)", Visual.Net.Core.Colors.Color.Parse(Bench.DyeG));
+            var inView = variants.Where(v => region.Contains(v.Position - 1)).ToList();
+            if (varTrack) view.AddVariants(inView, "Variants");
+            if (seqTrack) view.AddSequence(chr, 0, "Sequence");
+            figure = Bench.Svg(view);
+            try { svgText = view.ToSvg(); } catch { svgText = null; }
+            sw.Stop();
+
+            regionLabel = $"{chr.Id}:{start + 1:N0}-{end:N0}  ({end - start:N0} bp)";
+            rows = inView.Select(v =>
+            {
+                var e = vep.Predict(v).OrderBy(x => x.Impact).FirstOrDefault();
+                double af = v.Info.TryGetValue("AF", out var s) && double.TryParse(s, CultureInfo.InvariantCulture, out var f) ? f : double.NaN;
+                string impact = e?.Impact.ToString().ToUpperInvariant() ?? "MODIFIER";
+                string cls = e?.Impact switch { VariantImpact.High => "t", VariantImpact.Moderate => "g", VariantImpact.Low => "a", _ => "muted" };
+                return new Row(v.Position, v.Id ?? ".", $"{Short(v.Reference)}>{Short(string.Join(',', v.Alternates))}", v.Type.ToString(), af,
+                    e?.GeneName ?? "—", e?.ConsequenceTerms ?? "intergenic_variant", e?.HgvsP ?? e?.HgvsC ?? "", impact, cls);
+            }).ToList();
+
+            trace = chr.Subsequence((int)start, (int)Math.Min(400, end - start)).ToString();
+            traceLabel = $"TRACE · {chr.Id}:{start + 1:N0}";
+            status = $"{region} · {view.Tracks.Count} tracks · {inView.Count} variants · {genome.Genes.Count} genes in region file · rendered in {GalleryData.Ms(sw)}";
+            snippet = Snippet(region);
+        }
+        catch (Exception ex)
+        {
+            figure = Bench.Notice("Could not render the region", Bench.Explain(ex));
+            status = "Could not render the region: " + ex.Message;
+        }
+    }
+
+    private async Task SaveSvg()
+    {
+        if (svgText is not null) await JS.InvokeVoidAsync("gallery.download", $"{chr.Id}_{start + 1}-{end}.svg", "image/svg+xml", svgText);
+    }
+
+    private static string Short(string s) => s.Length <= 6 ? s : s[..5] + "…";
+
+    private string Snippet(GenomicInterval region) => $$"""
+        using Biotech.Net.Core;
+        using Biotech.Net.Genomics.Annotation;
+        using Biotech.Net.Sequences;
+        using Biotech.Net.Visualization;
+
+        // A toy chromosome: EGFP as a two-exon gene between random flanks (the page uses a bundled 12 kb region)
+        string egfp = {{GalleryData.Literal(GalleryData.Egfp)}};
+        string bases = RandomSequence.Dna(500, seed: 3).ToString() + egfp[..360] + RandomSequence.Dna(400, seed: 4).ToString()
+                     + egfp[360..] + RandomSequence.Dna(500, seed: 5).ToString();
+        var chr = Sequence.Dna(bases, "chrDemo");
+        var genome = new Genome("demo").Add(Chromosome.FromSequence(chr));
+        var exon1 = new GenomicInterval("chrDemo", 500, 860, Strand.Forward);
+        var exon2 = new GenomicInterval("chrDemo", 1260, 1620, Strand.Forward);
+        var gene = new Gene("G1", new GenomicInterval("chrDemo", 500, 1620, Strand.Forward), "EGFP");
+        gene.Transcripts.Add(new Transcript("EGFP-201", "G1", [exon1, exon2]) { CodingRegion = gene.Location });
+        genome.Add(gene);
+        Variant Snv(long pos1) => new("chrDemo", pos1, bases[(int)pos1 - 1].ToString(), bases[(int)pos1 - 1] == 'C' ? "T" : "C");
+        var variants = new List<Variant> { Snv(420), Snv(560), Snv(702), Snv(1000), Snv(1400), Snv(1505) };
+
+        // The same tracks as the page (whose current view is {{region}}), over the whole toy chromosome
+        var region = new GenomicInterval("chrDemo", 0, chr.Length);
+        var gc = SlidingWindow.GcContent(chr, window: 50, step: 1);
+        var view = new GenomeBrowser(region, width: 1080) { Theme = BioTheme.Dark }
+            .AddRuler()
+            .AddGenes(genome.GenesIn(region))
+            .AddCoverage(gc.Select(w => w.Value * 100).ToArray(), start: 25, name: "GC % (50 bp)")
+            .AddVariants(variants)
+            .AddSequence(chr);
+        Show(view);   // renders the SVG below the console
+
+        var vep = new VariantEffectPredictor(genome);
+        foreach (var v in variants)
+            foreach (var effect in vep.Predict(v))
+                Console.WriteLine($"{v} {effect.ConsequenceTerms} {effect.HgvsP} {effect.Impact}");
+        """;
+}

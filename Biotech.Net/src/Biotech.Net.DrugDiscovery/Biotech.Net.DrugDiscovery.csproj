@@ -13,6 +13,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Biotech.Net.DrugDiscovery.Tests" />
+    <!-- The GPU backend reuses the torsion tree, grid maps and post-processing; it sits above this module. -->
+    <InternalsVisibleTo Include="Biotech.Net.Gpu" />
+    <InternalsVisibleTo Include="Biotech.Net.Gpu.Tests" />
+    <InternalsVisibleTo Include="Biotech.Net.Benchmarks" />
   </ItemGroup>
 
 </Project>

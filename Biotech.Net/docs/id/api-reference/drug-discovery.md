@@ -43,7 +43,17 @@ Paket `Gravicode.Biotech.Net.DrugDiscovery` · namespace `Biotech.Net.DrugDiscov
 - `VinaScore.Score(pose, receptor atau structure, rotatableBonds, options)`, `Score(molecule, receptor, options)`, `Optimize(...)`, `ScoreInPocket(pose, receptor, pocket, …)`, `Rank(poses, receptor, …)`, `Hydrophobic`, `HydrogenBond`.
 - `VinaScoreTerms(Total, Gauss1, Gauss2, Repulsion, Hydrophobic, HydrogenBond, RotatableBonds, ContactCount)` dengan `Intermolecular` dan `Affinity`; `VinaScoreOptions` untuk bobot dan `CutOff`.
 
-Penilaian mengevaluasi pose yang diberikan dan menyediakan pencarian lokal benda tegar; tidak ada pembangkitan konformer maupun docking fleksibel.
+`VinaScore` adalah penilai cepat bertipe unsur dengan pencarian lokal benda tegar. Untuk skor yang setia pada Vina dan docking fleksibel gunakan tipe-tipe di bawah.
+
+## Docking fleksibel (metode AutoDock Vina)
+
+- `VinaReceptor.FromPdb(path)`, `FromStructure(structure, includeHetero, includeWater)`, `FromAtoms(atoms)`; `Positions`, `Types`, `Atoms`, `DonorsFromHydrogens`, `Count`.
+- `XsAtomType` (tipe X-Score Vina `C_H` … `Met_D`); `VinaAtomTypes.AssignLigand(mol)`, `Radius`, `IsHydrophobic`, `IsDonor`, `IsAcceptor`, `HBondPossible`.
+- `VinaDocking.Score(ligand, receptor, weights)` → `VinaPoseScore(Affinity, Intermolecular, Intramolecular, Terms, RotatableBonds)` dengan `Torsional`; `VinaTermSums(Gauss1, Gauss2, Repulsion, Hydrophobic, HydrogenBond)` dengan `Weighted(weights)`.
+- `VinaDocking.Dock(ligand, receptor, options)` → `DockingResult` (`Poses`, `Best`, `Grid`, `TorsionCount`, `RotatableBonds`, `Evaluations`, `GridTime`, `SearchTime`, `ToSdf()`, `ToPdbqt()`); `DockedPose` (`Rank`, `Molecule`, `Score`, `Affinity`, `RmsdLowerBound`, `RmsdUpperBound`).
+- `DockingOptions`: `Center`, `Size`, `GridSpacing`, `Exhaustiveness`, `MonteCarloSteps`, `NumPoses`, `EnergyRange`, `MinRmsd`, `Seed`, `Weights`, `MaxDegreeOfParallelism`.
+- `VinaGrid.Build(receptor, center, size, ligandTypes, spacing, weights)`, `Evaluate(type, point, cap, out gradient)`, `Origin`, `Size`, `Spacing`, `Dimensions`.
+- `PdbqtWriter.Write(result)`, `Write(ligand)`.
 
 ---
 [Indeks referensi API](index.md) · [Tutorial penemuan obat](../tutorials/drug-discovery.md)

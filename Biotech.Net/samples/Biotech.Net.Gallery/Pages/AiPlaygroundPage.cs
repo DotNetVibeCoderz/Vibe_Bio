@@ -12,6 +12,7 @@ using Biotech.Net.AI.Preprocessing;
 using Biotech.Net.Gallery.Controls;
 using Biotech.Net.Gallery.Shell;
 using Biotech.Net.StructuralBiology;
+using Gravicode.HFNet.GraviTokenizers;
 
 namespace Biotech.Net.Gallery.Pages;
 
@@ -30,6 +31,14 @@ public sealed class AiPlaygroundPage : GalleryPage
     ];
 
     private const string EsmRepo = "facebook/esm2_t6_8M_UR50D";
+
+    /// <summary>HF.Net's ESM tokenizer over <see cref="EsmVocabulary"/>, built once (it reads the vocabulary from a file).</summary>
+    private static readonly Lazy<HfTokenizer> EsmTokenizer = new(() =>
+    {
+        string path = Path.Combine(Path.GetTempPath(), "biotechnet-gallery-esm2-vocab.txt");
+        File.WriteAllLines(path, EsmVocabulary);
+        return HfTokenizer.FromEsmVocabulary(path);
+    });
 
     private TextBox _dna = null!, _protein = null!, _mutations = null!, _question = null!;
     private ComboBox _k = null!;
@@ -80,8 +89,8 @@ public sealed class AiPlaygroundPage : GalleryPage
             string dna = SequencePreprocessor.CleanDna(_dna.Text ?? "");
             string protein = SequencePreprocessor.CleanProtein(_protein.Text ?? "");
             var kmers = SequencePreprocessor.Kmers(dna, k);
-            var tok = new EsmTokenizer(EsmVocabulary);
-            int[] ids = tok.Encode(protein);
+            var tok = EsmTokenizer.Value;
+            int[] ids = tok.Encode(protein).ToIdArray();
             string dnabert = BioModelCatalog.DnaBert6.Preprocess(dna);
             string protbert = BioModelCatalog.ProtBert.Preprocess(protein);
 
@@ -91,8 +100,8 @@ public sealed class AiPlaygroundPage : GalleryPage
             var esmWrap = new WrapPanel();
             foreach (int id in ids.Take(60))
             {
-                string t = tok.Token(id);
-                esmWrap.Children.Add(Token(t, tok.IsSpecial(id) ? Palette.Ink3 : Palette.DyeC, id.ToString(CultureInfo.InvariantCulture)));
+                string t = tok.IdToToken(id);
+                esmWrap.Children.Add(Token(t, t.StartsWith('<') ? Palette.Ink3 : Palette.DyeC, id.ToString(CultureInfo.InvariantCulture)));
             }
 
             _prep.Content = Ui.Column(14,
@@ -101,7 +110,7 @@ public sealed class AiPlaygroundPage : GalleryPage
                     "SequencePreprocessor.Kmers"),
                 Ui.Panel("ESM-2 token ids", Ui.Column(8, esmWrap,
                     Ui.Text($"{ids.Length} ids incl. <cls>/<eos> · vocabulary {tok.VocabularySize} · ProtBERT spaced: \"{Preview(protbert, 40)}\"", "unit")),
-                    "EsmTokenizer.Encode"));
+                    "HfTokenizer.FromEsmVocabulary"));
 
             TraceSequence = dna;
             TraceLabel = $"TRACE · DNA input {dna.Length} nt";
@@ -141,8 +150,9 @@ public sealed class AiPlaygroundPage : GalleryPage
             var scores = await Task.Run(() =>
             {
                 if (HfToken() is { } token) BioModelHub.Configure(BioModelHub.Options with { Token = token });
-                using var model = EsmModel.Load(EsmRepo);
-                return new EsmVariantScorer(model).ScoreMany(wt, variants);
+                var scorer = EsmVariantScorer.Load(EsmRepo);
+                using var model = scorer.Model;
+                return scorer.ScoreMany(wt, variants);
             });
             _esmResult.Content = Ui.Table(["Variant", "LLR", "Reading"], ["Auto", "2*", "*"],
                 scores.Select(s => new Ui.Cell[]
@@ -261,9 +271,8 @@ public sealed class AiPlaygroundPage : GalleryPage
             Console.WriteLine($"{m.DisplayName} {m.RepoId} {m.Backend}");
 
         // ESM-2 variant effect (downloads facebook/esm2_t6_8M_UR50D once; HF_TOKEN read from the environment)
-        using var esm = EsmModel.Load("facebook/esm2_t6_8M_UR50D");
-        int[] ids = esm.Tokenizer.Encode(protein);
-        var scorer = new EsmVariantScorer(esm);
+        var scorer = EsmVariantScorer.Load("facebook/esm2_t6_8M_UR50D");   // HF.Net runs ESM-2
+        int[] ids = scorer.Model.Tokenizer.Encode(protein).ToIdArray();
         foreach (var s in scorer.ScoreMany(protein, ["T2A", "P5W", "C16S"]))
             Console.WriteLine(s);   // negative LLR = less likely than wild type
 

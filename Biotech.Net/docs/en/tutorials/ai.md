@@ -66,7 +66,7 @@ foreach (var p in mlm.PredictResidue("MKTAYIAKQRQISFVKSHF", position: 5, topK: 3
     Console.WriteLine($"{p.Token} {p.Score:F3}");
 
 // Zero-shot variant effects (masked marginals)
-var scorer = new EsmVariantScorer(mlm.Esm!);
+var scorer = new EsmVariantScorer(mlm.Model);
 Console.WriteLine(scorer.Score("MKTAYIAKQRQISFVKSHF", "Y5F"));   // wild type must match the sequence
 var scan = scorer.SaturationScan("MKTAYIAKQRQISFVKSHF", from: 1, to: 5);
 ```
@@ -123,14 +123,14 @@ Console.WriteLine($"{toolbox.Tools.Count} tools registered");
 
 | Model | Backend here | Status |
 |---|---|---|
-| ESM-2 (t6 8M, t12 35M, t30 150M, t33 650M), ESM-1v | built-in managed ESM runtime | supported — embeddings, masked LM, variant scoring |
+| ESM-2 (t6 8M, t12 35M, t30 150M, t33 650M), ESM-1v | HF.Net ESM encoder | supported — embeddings, masked LM, variant scoring |
 | BioBERT, PubMedBERT | HF.Net transformer | supported — text embeddings and masked LM |
 | ProtBERT, ProtBERT-BFD | HF.Net transformer | supported; input must be space-separated residues (handled by `Preprocess`) |
 | DNABERT (k = 3…6) | HF.Net transformer | supported; input is overlapping k-mers |
 | Geneformer V1 10M / V2 104M | Geneformer | supported through `GeneformerModel` plus rank-value encoding (not `BioEmbedder`) |
-| Nucleotide Transformer 500M human-ref | managed ESM runtime | loads, but not verified numerically against the Python implementation |
+| Nucleotide Transformer 500M human-ref | HF.Net ESM encoder | loads, but not verified numerically against the Python implementation |
 | **DNABERT-2 117M** | — | **not supported.** Its custom `bert_layers.py` (BPE + ALiBi) is not a standard BERT, so loading it would give wrong numbers; Biotech.Net refuses it. |
-| **Nucleotide Transformer v2 50M** | — | **not supported.** Needs rotary positions with a gated (SwiGLU) feed-forward from custom modelling code, which the built-in ESM runtime does not implement. |
+| **Nucleotide Transformer v2 50M** | — | **not supported.** Needs rotary positions with a gated (SwiGLU) feed-forward from custom modelling code, which HF.Net's ESM encoder does not implement. |
 
 Both unsupported models stay in the catalogue so that tooling can explain *why* they cannot run: `BioEmbedder.Load` and `BioMaskedLanguageModel.Load` throw `NotSupportedException` with the reason.
 

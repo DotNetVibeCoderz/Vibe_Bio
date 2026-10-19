@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Biotech.Net.Gpu</RootNamespace>
+    <Description>GPU kernels on ILGPU (CUDA, OpenCL, CPU accelerator): all-vs-all Smith-Waterman scoring and batched Vina-style docking, with automatic fallback to the Rust/managed CPU path. Dibuat oleh Gravicode Studios, dipimpin oleh Kang Fadhil.</Description>
+    <PackageTags>$(PackageTags);gpu;ilgpu;cuda;opencl;smith-waterman;docking</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ILGPU" />
+    <PackageReference Include="ILGPU.Algorithms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Biotech.Net.Alignments/Biotech.Net.Alignments.csproj" />
+    <ProjectReference Include="../Biotech.Net.DrugDiscovery/Biotech.Net.DrugDiscovery.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Biotech.Net.Gpu.Tests" />
+    <InternalsVisibleTo Include="Biotech.Net.Benchmarks" />
+  </ItemGroup>
+
+</Project>

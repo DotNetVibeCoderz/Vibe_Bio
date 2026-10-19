@@ -1,0 +1,14 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found · Biotech.Net Web Gallery</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <PageFrame Title="No such page" Modules="BIOTECH.NET.WEBGALLERY" Trace="TAGTAATAGTGA"
+                       Lede="This address does not match a gallery page. Pick a module on the left.">
+            </PageFrame>
+        </LayoutView>
+    </NotFound>
+</Router>

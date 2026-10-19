@@ -1,0 +1,182 @@
+@page "/transcriptomics"
+@using Biotech.Net.Transcriptomics
+@using Biotech.Net.Visualization
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<PageFrame Title="Transcriptomics" Modules="BIOTECH.NET.TRANSCRIPTOMICS · VISUALIZATION"
+           Lede="A bundled count table (400 genes, 3 control and 3 interferon-treated samples; synthetic demo data) goes through the DESeq2-style pipeline: size factors, dispersion shrinkage, Wald tests and Benjamini–Hochberg. The volcano and MA plots are Biotech.Net.Visualization figures."
+           Trace="@trace" TraceLabel="@traceLabel" Status="@status" Code="@snippet">
+    <Actions>
+        <button class="quiet" type="button" @onclick="SaveSvg" disabled="@(volcano is null)">Save volcano SVG</button>
+    </Actions>
+    <ChildContent>
+        @if (notice is not null)
+        {
+            @notice
+        }
+        else if (result is null)
+        {
+            <Panel Title="DESeq"><p class="caption">Loading data/ifn-demo-counts.tsv and fitting the negative-binomial model…</p></Panel>
+        }
+        else
+        {
+            <Panel Title="@($"{result.Method} · {result.Contrast}")" Aside="@($"fitted in {elapsed}")">
+                <div class="readouts">
+                    <Readout Label="Genes" Value="@Bench.N(result.Genes.Count)" />
+                    <Readout Label="Samples" Value="@counts!.Columns.ToString()" Unit="3 + 3" />
+                    <Readout Label="Up" Value="@up.ToString()" Unit="@($"padj < {alpha.ToString(CultureInfo.InvariantCulture)}")" Dye="t" />
+                    <Readout Label="Down" Value="@down.ToString()" Unit="@($"padj < {alpha.ToString(CultureInfo.InvariantCulture)}")" Dye="c" />
+                    <Readout Label="Size factors" Value="@sizeFactors" />
+                </div>
+            </Panel>
+
+            <Panel Title="Thresholds">
+                <div class="toggles" style="margin:0">
+                    <span class="eyebrow">padj &lt;</span>
+                    <select @bind="alpha" @bind:after="Plot" aria-label="Adjusted p-value threshold">
+                        <option value="0.1">0.1</option>
+                        <option value="0.05">0.05</option>
+                        <option value="0.01">0.01</option>
+                        <option value="0.001">0.001</option>
+                    </select>
+                    <span class="eyebrow">|log2 FC| ≥</span>
+                    <select @bind="lfc" @bind:after="Plot" aria-label="Fold-change threshold">
+                        <option value="0">0</option>
+                        <option value="0.5">0.5</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                    <span class="eyebrow">Labels</span>
+                    <select @bind="labelTop" @bind:after="Plot" aria-label="Number of labelled genes">
+                        <option value="0">none</option>
+                        <option value="6">top 6</option>
+                        <option value="12">top 12</option>
+                    </select>
+                </div>
+            </Panel>
+
+            <div class="grid-2">
+                <Panel Title="Volcano" Aside="−log10 padj vs log2 fold change">
+                    <div class="figure-well">@volcanoSvg</div>
+                </Panel>
+                <Panel Title="MA plot" Aside="log2 fold change vs mean of normalised counts">
+                    <div class="figure-well">@maSvg</div>
+                </Panel>
+            </div>
+
+            <Panel Title="Top genes" Aside="ranked by adjusted p-value">
+                <div class="table-scroll">
+                    <table class="data">
+                        <thead><tr><th>Gene</th><th>Base mean</th><th>log2 FC</th><th>lfcSE</th><th>Wald</th><th>p</th><th>padj</th></tr></thead>
+                        <tbody>
+                            @foreach (var r in result.Top(15))
+                            {
+                                <tr>
+                                    <td class="@(r.Log2FoldChange > 0 ? "t" : "c")">@r.Gene</td>
+                                    <td>@Bench.F(r.BaseMean, "0.0")</td>
+                                    <td>@r.Log2FoldChange.ToString("+0.00;-0.00", CultureInfo.InvariantCulture)</td>
+                                    <td class="muted">@Bench.F(r.LfcSE, "0.000")</td>
+                                    <td class="muted">@Bench.F(r.Stat, "0.00")</td>
+                                    <td class="muted">@r.PValue.ToString("0.00E+00", CultureInfo.InvariantCulture)</td>
+                                    <td>@r.PAdj.ToString("0.00E+00", CultureInfo.InvariantCulture)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </Panel>
+        }
+    </ChildContent>
+</PageFrame>
+
+@code {
+    private Dataset? counts;
+    private DifferentialExpressionResult? result;
+    private VolcanoPlot? volcano;
+    private MarkupString volcanoSvg, maSvg;
+    private MarkupString? notice;
+    private double alpha = 0.05, lfc = 1;
+    private int labelTop = 12, up, down;
+    private string sizeFactors = "", elapsed = "", status = "Loading the count table…", snippet = "";
+    private string? trace, traceLabel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            string tsv = await Http.GetStringAsync("data/ifn-demo-counts.tsv");
+            counts = CountMatrixReader.ReadTable(new StringReader(tsv), "ifn-demo");
+            counts.Annotate("condition", "ctl", "ctl", "ctl", "trt", "trt", "trt");
+            status = "Fitting DESeq2-style model…";
+            StateHasChanged();
+            await JS.InvokeVoidAsync("gallery.nextFrame");
+            var sw = Stopwatch.StartNew();
+            result = DESeq.Run(counts, "condition", "ctl", "trt");
+            var sf = Normalization.MedianOfRatiosSizeFactors(counts);
+            sizeFactors = $"{sf.Min().ToString("0.00", CultureInfo.InvariantCulture)}–{sf.Max().ToString("0.00", CultureInfo.InvariantCulture)}";
+            sw.Stop();
+            elapsed = GalleryData.Ms(sw);
+            Plot();
+            trace = GalleryData.TextToBases(string.Join("", result.Top(12).Select(r => r.Gene)));
+            traceLabel = "TRACE · top-gene symbols encoded 2 bases/char";
+            snippet = Snippet;
+        }
+        catch (Exception ex)
+        {
+            notice = Bench.Notice("Could not run the analysis", Bench.Explain(ex));
+            status = "Could not run the analysis: " + ex.Message;
+        }
+    }
+
+    private void Plot()
+    {
+        if (result is null) return;
+        (up, down) = result.CountSignificant(alpha);
+        volcano = new VolcanoPlot(result)
+        {
+            Theme = Bench.PlotTheme, Alpha = alpha, FoldChangeThreshold = lfc, LabelTop = labelTop, UseAdjustedPValue = true,
+            Width = 560, Height = 440,
+        };
+        volcanoSvg = Bench.Svg(volcano);
+        var ma = new MaPlot(result) { Theme = Bench.PlotTheme, Alpha = alpha, FoldChangeThreshold = lfc, LabelTop = Math.Min(labelTop, 6), Width = 560, Height = 440 };
+        maSvg = Bench.Svg(ma);
+        var c = volcano.Counts();
+        status = $"{result.Genes.Count} genes · {up} up / {down} down at padj < {alpha.ToString(CultureInfo.InvariantCulture)} · volcano: {c.Up} up, {c.Down} down beyond |log2FC| ≥ {lfc.ToString(CultureInfo.InvariantCulture)} · DESeq {elapsed}";
+    }
+
+    private async Task SaveSvg()
+    {
+        if (volcano is null) return;
+        try { await JS.InvokeVoidAsync("gallery.download", "volcano.svg", "image/svg+xml", volcano.ToSvg()); }
+        catch (Exception ex) { status = Bench.Explain(ex); }
+    }
+
+    private const string Snippet = """
+        using Biotech.Net.Transcriptomics;
+        using Biotech.Net.Visualization;
+
+        // The page loads wwwroot/data/ifn-demo-counts.tsv; here a comparable table is simulated in place.
+        var rng = new Random(7);
+        string[] up = ["IFIT1", "MX1", "ISG15", "OAS1", "RSAD2", "STAT1", "IRF7", "CXCL10"];
+        var genes = up.Concat(Enumerable.Range(1, 192).Select(i => $"GENE{i:D4}")).ToArray();
+        var values = new double[genes.Length * 6];
+        for (int g = 0; g < genes.Length; g++)
+        {
+            double mean = Math.Exp(3 + 5 * rng.NextDouble()), fold = g < up.Length ? 8 : 1;
+            for (int s = 0; s < 6; s++)
+                values[g * 6 + s] = Math.Round(mean * (s >= 3 ? fold : 1) * (0.8 + 0.4 * rng.NextDouble()));
+        }
+        var counts = new Dataset("counts", genes, ["ctl1", "ctl2", "ctl3", "trt1", "trt2", "trt3"], values);
+        counts.Annotate("condition", "ctl", "ctl", "ctl", "trt", "trt", "trt");
+        // From a file: CountMatrixReader.ReadTable(new StreamReader("counts.tsv"))
+
+        DifferentialExpressionResult res = DESeq.Run(counts, "condition", "ctl", "trt");
+        Console.WriteLine(res.CountSignificant(alpha: 0.05));
+        foreach (var row in res.Top(8))
+            Console.WriteLine($"{row.Gene,-8} log2FC {row.Log2FoldChange,6:F2}  padj {row.PAdj:E2}");
+
+        Show(new VolcanoPlot(res) { Theme = BioTheme.Dark, LabelTop = 8, UseAdjustedPValue = true });
+        Show(new MaPlot(res) { Theme = BioTheme.Dark });
+        """;
+}
