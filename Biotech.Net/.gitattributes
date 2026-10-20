@@ -1,0 +1,14 @@
+# Test fixtures are compared byte for byte (CRAM references and their .fai offsets, expected SAM/VCF output,
+# PDB columns), so they must never be converted to CRLF on a Windows checkout.
+tests/**/data/** -text
+tests/**/Data/** -text
+tests/**/Fixtures/** -text
+*.fa -text
+*.fai -text
+*.sam -text
+*.vcf -text
+*.pdb -text
+*.cif -text
+*.sdf -text
+*.mol -text
+*.pdbqt -text

@@ -162,6 +162,9 @@ public class DiskDataCacheTests
         byte[] small = Enumerable.Repeat((byte)'a', 1_000).ToArray();
         byte[] large = Enumerable.Repeat((byte)'b', 200_000).ToArray();
         int reads = 0, hits = 0;
+        // Seed the entry so readers that start before the first concurrent write still hit; otherwise a fast
+        // scheduler can finish every read before any writer runs and the test would prove nothing.
+        await writerA.SetAsync(Key1, new CacheEntry(small, DateTimeOffset.UnixEpoch));
         var tasks = new List<Task>();
         for (int w = 0; w < 4; w++)
         {
