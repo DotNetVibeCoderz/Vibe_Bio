@@ -133,6 +133,8 @@ Example figures produced by `Biotech.Net.Visualization`:
 
 ## Web Gallery and C# Playground — in the browser
 
+**Try it live: <https://dotnetvibecoderz.github.io/Vibe_Bio/>**
+
 `samples/Biotech.Net.WebGallery` is a Blazor WebAssembly twin of the desktop Gallery: DNA Explorer, Genome Browser, Protein Explorer (with 3Dmol.js), Drug Discovery Lab, CRISPR Designer, Transcriptomics (DESeq + volcano) and an in-browser **C# Playground**. In the Playground, Roslyn compiles snippets against the loaded Biotech.Net assemblies and `Show(...)` renders figures. Everything runs client-side on the managed kernels. Run it with `dotnet run --project samples/Biotech.Net.WebGallery`, and see [docs/en/web-gallery.md](docs/en/web-gallery.md) for browser limits and GitHub Pages deployment.
 
 *Bahasa Indonesia:* versi peramban dari Gallery, lengkap dengan C# Playground. Semuanya berjalan di sisi klien. Lihat [docs/id/web-gallery.md](docs/id/web-gallery.md).

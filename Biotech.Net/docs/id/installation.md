@@ -34,7 +34,7 @@ dotnet add package Gravicode.Biotech.Net.Workflows
 Di notebook:
 
 ```text
-#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"
 ```
 
 Biner native ikut dalam `Gravicode.Biotech.Net.Native` di `runtimes/{rid}/native/`, sehingga `dotnet publish` atau `dotnet run` biasa otomatis memakai biner yang tepat.

@@ -12,7 +12,7 @@ The authoritative roadmap is [`PLAN.md`](../../PLAN.md) at the repository root, 
 | **v2 — Omics (0.2.x)** | Genomics (VCF, variant effects, population genetics, de Bruijn assembly, gene finding, read mapping, SNV calling); Transcriptomics (normalisation, DESeq2-style and limma-voom-style DE, ORA/GSEA, single cell); Proteomics (ProtParam, digestion, MS/MS with target–decoy FDR, quantification, classification); StructuralBiology (PDB/mmCIF, geometry, superposition, DSSP, SASA, pockets) |
 | **v3 — Discovery (0.3.x)** | Chemistry (SMILES/SDF, descriptors, fingerprints, substructure search); DrugDiscovery (screening, target prediction, ADMET, lead optimisation, QSAR); SyntheticBiology (guide design and scoring, base and prime editing models, codon optimisation, primers, Gibson and Golden Gate, circuit simulation); AI (HF.Net model zoo, offline preprocessing, embeddings, ESM variant scoring, LLM copilot) |
 
-## Added after 0.1.0 (next release)
+## Added in 0.2.0
 
 | Area | Contents |
 |---|---|
@@ -23,11 +23,11 @@ The authoritative roadmap is [`PLAN.md`](../../PLAN.md) at the repository root, 
 | **Workflow engine** | `Biotech.Net.Workflows`: Snakemake-style rules, DAG scheduling, incremental re-runs ([Workflows tutorial](tutorials/workflows.md)) |
 | **Cloud data connectors** | `Biotech.Net.Data`: NCBI E-utilities, UniProt, RCSB PDB, AlphaFold DB, Ensembl REST with caching and offline mode ([Data tutorial](tutorials/data.md)) |
 | **Single cell at atlas scale** | AnnData h5ad read/write with backed mode, out-of-core sparse matrices, QC / normalisation / HVG / PCA matching scanpy 1.12 |
+| **Web gallery** | Blazor WebAssembly gallery and an in-browser C# playground ([Web Gallery](web-gallery.md)) |
 | **AI** | Biotech.Net.AI now runs ESM and Geneformer on HF.Net 0.11 instead of its own copies |
 
 ## Still open
 
-- Web gallery (Blazor WebAssembly) and a hosted playground — in progress.
 - CRAM writing and LZMA-compressed CRAM blocks.
 - MMFF94, flexible receptor side chains, Vinardo/AD4 scoring.
 - Vulkan backend; GPU traceback and global alignment.

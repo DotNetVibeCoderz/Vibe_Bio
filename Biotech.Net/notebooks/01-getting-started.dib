@@ -14,7 +14,7 @@
 
 #!csharp
 
-#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"
 // Local build instead of NuGet (run `dotnet build Biotech.Net.slnx` first), comment the line above and use:
 // #r "../src/Biotech.Net.Notebooks/bin/Debug/net10.0/Biotech.Net.Notebooks.dll"
 

@@ -55,7 +55,7 @@ Enam notebook `.dib` dwibahasa di `notebooks/`, untuk Polyglot Notebooks (VS Cod
 | `05-protein-structure.dib` | ProtParam, DSSP, SASA, superposisi, penampil 3-D |
 | `06-cheminformatics.dib` | SMILES, deskriptor, sidik jari, kemiripan, penggambaran |
 
-Masing-masing diawali `#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"` berikut alternatif terkomentar yang merujuk build lokal, sehingga bisa dipakai baik dari NuGet maupun dari hasil klon repositori.
+Masing-masing diawali `#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"` berikut alternatif terkomentar yang merujuk build lokal, sehingga bisa dipakai baik dari NuGet maupun dari hasil klon repositori.
 
 ## Gambar di dokumentasi ini
 

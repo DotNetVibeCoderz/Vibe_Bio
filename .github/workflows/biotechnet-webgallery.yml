@@ -1,0 +1,85 @@
+# Biotech.Net Web Gallery: publishes samples/Biotech.Net.WebGallery (Blazor WebAssembly, standalone) to GitHub Pages
+# at https://dotnetvibecoderz.github.io/Vibe_Bio/.
+#
+# Source copy: Biotech.Net/build/workflows/. GitHub only runs workflows from the monorepo root .github/workflows/,
+# so this file does nothing until it is copied there. Before enabling it:
+#   - Settings > Pages > Build and deployment > Source: "GitHub Actions".
+#   - Settings > Environments > github-pages: allow deployments from the main branch (the default rule).
+# The site is public once deployed.
+name: Biotech.Net Web Gallery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Biotech.Net/samples/Biotech.Net.WebGallery/**"
+      - "Biotech.Net/samples/Biotech.Net.Gallery/Data/**"
+      - "Biotech.Net/src/**"
+      - "Biotech.Net/Directory.*.props"
+      - ".github/workflows/biotechnet-webgallery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: Biotech.Net
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: Publish WebAssembly app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      # Links SkiaSharp's native library into dotnet.native.wasm (text metrics for every SVG figure).
+      - name: Install wasm-tools
+        run: dotnet workload install wasm-tools
+
+      # The Rust kernels cannot run in the browser; the managed kernels are used, so cargo is skipped.
+      - name: Publish
+        run: dotnet publish samples/Biotech.Net.WebGallery/Biotech.Net.WebGallery.csproj -c Release -p:SkipRustBuild=true -o publish
+
+      - name: Prepare for GitHub Pages
+        run: |
+          site=publish/wwwroot
+          # Project site: served from /<repository>/ (here /Vibe_Bio/).
+          base="/${GITHUB_REPOSITORY#*/}/"
+          sed -i "s|<base href=\"/\" />|<base href=\"${base}\" />|" "$site/index.html"
+          grep -q "<base href=\"${base}\" />" "$site/index.html"
+          # Deep links (/Vibe_Bio/playground) hit Pages' 404 page; serve the app from it so the router takes over.
+          cp "$site/index.html" "$site/404.html"
+          # Folders starting with "_" (_framework) must not be dropped by Jekyll.
+          touch "$site/.nojekyll"
+          # Pages does not serve precompressed variants; drop them to keep the artifact small.
+          find "$site" \( -name '*.br' -o -name '*.gz' \) -delete
+          du -sh "$site"
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: Biotech.Net/publish/wwwroot
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

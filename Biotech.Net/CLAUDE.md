@@ -58,4 +58,4 @@ Each `.csproj` lists its module-to-module references. Keep the graph acyclic; Vi
 - LLM API key for real-model tests: `C:\Users\mifma\Documents\CodeSandbox\testkey.txt`
 - Hugging Face token: `C:\Users\mifma\Documents\CodeSandbox\HFToken.txt`
 
-Publishing happens from the monorepo `C:\experiment\VibeCoding\Vibe_Bio`, where this solution goes in as a subfolder. `NUGET_API_KEY` is already a repository secret there. Follow the CI and publish workflow pattern of `Vibe_Finance/.github/workflows/financenet-*.yml`, using tag prefix `biotechnet-v`.
+This solution lives in the monorepo `C:\experiment\VibeCoding\Vibe_Bio` (GitHub `DotNetVibeCoderz/Vibe_Bio`) as the `Biotech.Net/` subfolder. Workflows run from the monorepo root `.github/workflows/` (source copies in `build/workflows/`): `biotechnet-ci.yml`, `biotechnet-publish.yml` (push a `biotechnet-v<version>` tag; secret `NUGET_API_KEY`) and `biotechnet-webgallery.yml` (GitHub Pages). nuget.org versions cannot be overwritten, so push and wait for green CI before tagging.

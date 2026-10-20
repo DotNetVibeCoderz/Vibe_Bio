@@ -9,7 +9,7 @@ Formatter HTML kaya untuk .NET Interactive, sehingga `Sequence`, `Dataset`, tabe
 ## 1. Persiapan di notebook
 
 ```text
-#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"
 ```
 
 ```csharp

@@ -12,7 +12,7 @@ Roadmap resmi ada di [`PLAN.md`](../../PLAN.md) pada akar repositori, dan status
 | **v2 — Omics (0.2.x)** | Genomics (VCF, efek varian, genetika populasi, perakitan de Bruijn, pencarian gen, pemetaan bacaan, pemanggilan SNV); Transcriptomics (normalisasi, DE gaya DESeq2 dan limma-voom, ORA/GSEA, sel tunggal); Proteomics (ProtParam, digesti, MS/MS dengan FDR target–decoy, kuantifikasi, klasifikasi); StructuralBiology (PDB/mmCIF, geometri, superposisi, DSSP, SASA, kantong ikatan) |
 | **v3 — Penemuan (0.3.x)** | Chemistry (SMILES/SDF, deskriptor, sidik jari, pencarian substruktur); DrugDiscovery (penapisan, prediksi target, ADMET, optimasi lead, QSAR); SyntheticBiology (desain dan penilaian guide, model base dan prime editing, optimasi kodon, primer, Gibson dan Golden Gate, simulasi sirkuit); AI (model zoo HF.Net, praproses offline, embedding, penilaian varian ESM, kopilot LLM) |
 
-## Ditambahkan setelah 0.1.0 (rilis berikutnya)
+## Ditambahkan di 0.2.0
 
 | Bidang | Isi |
 |---|---|
@@ -23,11 +23,11 @@ Roadmap resmi ada di [`PLAN.md`](../../PLAN.md) pada akar repositori, dan status
 | **Mesin alur kerja** | `Biotech.Net.Workflows`: aturan gaya Snakemake, penjadwalan DAG, jalankan ulang inkremental ([tutorial Workflows](tutorials/workflows.md)) |
 | **Konektor data awan** | `Biotech.Net.Data`: NCBI E-utilities, UniProt, RCSB PDB, AlphaFold DB, Ensembl REST dengan cache dan mode offline ([tutorial Data](tutorials/data.md)) |
 | **Sel tunggal skala atlas** | baca/tulis h5ad AnnData dengan mode backed, matriks sparse out-of-core, QC / normalisasi / HVG / PCA yang cocok dengan scanpy 1.12 |
+| **Gallery web** | gallery Blazor WebAssembly dan playground C# di browser ([Web Gallery](web-gallery.md)) |
 | **AI** | Biotech.Net.AI kini menjalankan ESM dan Geneformer di atas HF.Net 0.11, bukan salinannya sendiri |
 
 ## Masih terbuka
 
-- Gallery web (Blazor WebAssembly) dan playground terhosting — sedang dikerjakan.
 - Penulisan CRAM dan blok CRAM berkompresi LZMA.
 - MMFF94, rantai samping reseptor yang fleksibel, penilaian Vinardo/AD4.
 - Backend Vulkan; traceback GPU dan penjajaran global.

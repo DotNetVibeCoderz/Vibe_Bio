@@ -9,7 +9,7 @@ Rich HTML formatters for .NET Interactive, so that a `Sequence`, a `Dataset`, a 
 ## 1. Set-up in a notebook
 
 ```text
-#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"
 ```
 
 ```csharp

@@ -4,7 +4,7 @@
 
 `samples/Biotech.Net.WebGallery` adalah aplikasi Blazor WebAssembly (standalone): kembaran [Gallery desktop](samples.md) versi peramban, dengan halaman, data, dan desain "bench instrument" yang sama. Ada juga **C# Playground** yang mengompilasi dan menjalankan cuplikan Biotech.Net langsung di tab peramban. Semua komputasi berjalan di sisi klien dengan pustaka Biotech.Net. Tidak ada server dan tidak ada data yang diunggah.
 
-Rencana alamat publik (setelah workflow Pages diaktifkan): `https://dotnetvibecoderz.github.io/Vibe_Bio/`
+Versi live: [https://dotnetvibecoderz.github.io/Vibe_Bio/](https://dotnetvibecoderz.github.io/Vibe_Bio/) (diterbitkan oleh `.github/workflows/biotechnet-webgallery.yml` setiap push ke `main` yang menyentuh aplikasi atau pustaka).
 
 ![DNA Explorer di peramban](../screenshots/webgallery-dna-explorer.png)
 

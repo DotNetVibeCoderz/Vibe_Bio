@@ -34,7 +34,7 @@ dotnet add package Gravicode.Biotech.Net.Workflows
 In a notebook:
 
 ```text
-#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"
+#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"
 ```
 
 The native binaries ship inside `Gravicode.Biotech.Net.Native` under `runtimes/{rid}/native/`, so a normal `dotnet publish` or `dotnet run` picks up the right one automatically.

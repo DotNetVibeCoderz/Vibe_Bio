@@ -4,7 +4,7 @@
 
 `samples/Biotech.Net.WebGallery` is a Blazor WebAssembly (standalone) app: the browser twin of the [desktop Gallery](samples.md), with the same pages, data and "bench instrument" design, plus a **C# Playground** that compiles and runs Biotech.Net snippets inside the browser tab. All computation runs client-side on the Biotech.Net libraries. There is no server and nothing is uploaded.
 
-Planned public address (once the Pages workflow is enabled): `https://dotnetvibecoderz.github.io/Vibe_Bio/`
+Live: [https://dotnetvibecoderz.github.io/Vibe_Bio/](https://dotnetvibecoderz.github.io/Vibe_Bio/) (deployed by `.github/workflows/biotechnet-webgallery.yml` on every push to `main` that touches the app or the libraries).
 
 ![DNA Explorer in the browser](../screenshots/webgallery-dna-explorer.png)
 

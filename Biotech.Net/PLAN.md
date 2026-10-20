@@ -57,7 +57,7 @@ Status per item is tracked in [Progress.md](Progress.md). The architecture is de
 
 - [x] **HF.Net 0.11.0** (`Vibe_ML/HF.Net`, published to nuget.org on 2026-10-15) — ESM / ESM-2 encoder and tokenizer, NumPy scalars in the pickle reader, models without a tokenizer, and a new package icon. `Biotech.Net.AI` now references 0.11.0.
 - [x] `Biotech.Net.AI` dropped its own ESM implementation, restricted pickle reader and Geneformer `vocab.txt` placeholder in favour of HF.Net 0.11.0 (breaking: `EsmModel`/`EsmTokenizer`/`EsmConfig` removed).
-- [ ] **HF.Net 0.11.1** (fixed locally, unpublished) — ESM rotary embeddings use the fp16-rounded `inv_freq` stored in the checkpoint, as transformers 5 does.
+- [x] **HF.Net 0.11.1** (published 2026-10-20; `Biotech.Net.AI` references it) — ESM rotary embeddings use the fp16-rounded `inv_freq` stored in the checkpoint, as transformers 5 does.
 
 ## Release / Rilis
 

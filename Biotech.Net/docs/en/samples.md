@@ -55,7 +55,7 @@ Six bilingual `.dib` notebooks in `notebooks/`, for Polyglot Notebooks (VS Code)
 | `05-protein-structure.dib` | ProtParam, DSSP, SASA, superposition, 3-D viewer |
 | `06-cheminformatics.dib` | SMILES, descriptors, fingerprints, similarity, depiction |
 
-Each starts with `#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.1.0"` and a commented alternative that references the local build instead, so they work both from NuGet and from a clone.
+Each starts with `#r "nuget: Gravicode.Biotech.Net.Notebooks, 0.2.0"` and a commented alternative that references the local build instead, so they work both from NuGet and from a clone.
 
 ## Figures in this documentation
 
